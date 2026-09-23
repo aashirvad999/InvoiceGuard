@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'admin';
+    }
+
+    // User Profile Document
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+      
+      // Subcollections scoped to the user UID
+      match /invoices/{invoiceId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+      
+      match /vendors/{vendorId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+      
+      match /complaints/{complaintId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+      
+      match /feedback/{feedbackId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+      
+      match /chat_history/{chatId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+    
+    // Admin-only global collections
+    match /global_vendor_blacklist/{vendorId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    match /audit_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

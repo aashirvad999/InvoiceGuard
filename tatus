@@ -1,0 +1,264 @@
+warning: in the working copy of 'engine/ai_explainer.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'engine/deterministic.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'engine/document_forensics.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'engine/firestore_db.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'engine/risk_engine.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'engine/seed_data.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'main.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'static/app.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'static/index.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'verify_endpoints.py', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/.gitignore.txt b/.gitignore.txt[m
+[1mdeleted file mode 100644[m
+[1mindex e69de29..0000000[m
+[1mdiff --git a/__pycache__/main.cpython-314.pyc b/__pycache__/main.cpython-314.pyc[m
+[1mindex a87adc9..b1693e7 100644[m
+Binary files a/__pycache__/main.cpython-314.pyc and b/__pycache__/main.cpython-314.pyc differ
+[1mdiff --git a/engine/__pycache__/ai_explainer.cpython-314.pyc b/engine/__pycache__/ai_explainer.cpython-314.pyc[m
+[1mindex caaa781..cc7f09a 100644[m
+Binary files a/engine/__pycache__/ai_explainer.cpython-314.pyc and b/engine/__pycache__/ai_explainer.cpython-314.pyc differ
+[1mdiff --git a/engine/__pycache__/deterministic.cpython-314.pyc b/engine/__pycache__/deterministic.cpython-314.pyc[m
+[1mindex 841985f..3d57a56 100644[m
+Binary files a/engine/__pycache__/deterministic.cpython-314.pyc and b/engine/__pycache__/deterministic.cpython-314.pyc differ
+[1mdiff --git a/engine/__pycache__/document_forensics.cpython-314.pyc b/engine/__pycache__/document_forensics.cpython-314.pyc[m
+[1mindex adfa124..920ddcb 100644[m
+Binary files a/engine/__pycache__/document_forensics.cpython-314.pyc and b/engine/__pycache__/document_forensics.cpython-314.pyc differ
+[1mdiff --git a/engine/__pycache__/firestore_db.cpython-314.pyc b/engine/__pycache__/firestore_db.cpython-314.pyc[m
+[1mindex bd5c757..7a65244 100644[m
+Binary files a/engine/__pycache__/firestore_db.cpython-314.pyc and b/engine/__pycache__/firestore_db.cpython-314.pyc differ
+[1mdiff --git a/engine/__pycache__/risk_engine.cpython-314.pyc b/engine/__pycache__/risk_engine.cpython-314.pyc[m
+[1mindex 3c86ae3..d5e3437 100644[m
+Binary files a/engine/__pycache__/risk_engine.cpython-314.pyc and b/engine/__pycache__/risk_engine.cpython-314.pyc differ
+[1mdiff --git a/engine/__pycache__/seed_data.cpython-314.pyc b/engine/__pycache__/seed_data.cpython-314.pyc[m
+[1mindex 93ecbcc..75976e9 100644[m
+Binary files a/engine/__pycache__/seed_data.cpython-314.pyc and b/engine/__pycache__/seed_data.cpython-314.pyc differ
+[1mdiff --git a/engine/ai_explainer.py b/engine/ai_explainer.py[m
+[1mindex 924507c..6b13d08 100644[m
+[1m--- a/engine/ai_explainer.py[m
+[1m+++ b/engine/ai_explainer.py[m
+[36m@@ -1,74 +1,161 @@[m
+ """[m
+ AI Explanation & Interactive Chatbot Engine for InvoiceGuard[m
+[31m-Uses Gemini 2.5/2.0 selectively for explainability, deep question answering,[m
+[31m-and drafting vendor compliance communications without hallucinations.[m
+[32m+[m[32mUses Gemini 3.6 Flash as an EXPLANATION / AI ASSISTANT layer over deterministic invoice audit data.[m
+ """[m
+ [m
+ import os[m
+ import json[m
+[32m+[m[32mimport logging[m
+ from typing import Dict, List, Any, Optional[m
+ [m
+[32m+[m[32mlogger = logging.getLogger("invoiceguard.ai")[m
+[32m+[m[32mlogger.setLevel(logging.INFO)[m
+[32m+[m[32mif not logger.handlers:[m
+[32m+[m[32m    ch = logging.StreamHandler()[m
+[32m+[m[32m    ch.setLevel(logging.INFO)[m
+[32m+[m[32m    formatter = logging.Formatter("[%(asctime)s] [AI-DIAGNOSTIC] %(message)s")[m
+[32m+[m[32m    ch.setFormatter(formatter)[m
+[32m+[m[32m    logger.addHandler(ch)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef load_local_env():[m
+[32m+[m[32m    """Helper to load .env file if present in workspace root."""[m
+[32m+[m[32m    env_paths = [[m
+[32m+[m[32m        os.path.join(os.path.dirname(__file__), "..", ".env"),[m
+[32m+[m[32m        os.path.join(os.path.dirname(__file__), ".env"),[m
+[32m+[m[32m        ".env"[m
+[32m+[m[32m    ][m
+[32m+[m[32m    for p in env_paths:[m
+[32m+[m[32m        if os.path.exists(p):[m
+[32m+[m[32m            try:[m
+[32m+[m[32m                with open(p, "r", encoding="utf-8") as f:[m
+[32m+[m[32m                    for line in f:[m
+[32m+[m[32m                        line = line.strip()[m
+[32m+[m[32m                        if line and not line.startswith("#") and "=" in line:[m
+[32m+[m[32m                            k, v = line.split("=", 1)[m
+[32m+[m[32m                            os.environ[k.strip()] = v.strip().strip("'\"")[m
+[32m+[m[32m                logger.info("Loaded environment variables from '%s'", os.path.abspath(p))[m
+[32m+[m[32m                break[m
+[32m+[m[32m            except Exception as e:[m
+[32m+[m[32m                logger.warning("Failed reading .env from '%s': %s", p, str(e))[m
+[32m+[m
+[32m+[m[32mload_local_env()[m
+[32m+[m
+ try:[m
+     from google import genai[m
+     from google.genai import types[m
+     GENAI_AVAILABLE = True[m
+[31m-except ImportError:[m
+[32m+[m[32mexcept ImportError as e:[m
+     GENAI_AVAILABLE = False[m
+[32m+[m[32m    logger.error("google-genai import failed: %s: %s", type(e).__name__, str(e))[m
+[32m+[m
+[32m+[m[32mFALLBACK_EXPLANATION = "AI explanation temporarily unavailable. Deterministic analysis is still available."[m
+[32m+[m[32mGEMINI_MODEL = "gemini-3.6-flash"[m
+[32m+[m
+[32m+[m[32mSYSTEM_INSTRUCTION = ([m
+[32m+[m[32m    "You are the explanation layer of InvoiceGuard. "[m
+[32m+[m[32m    "The deterministic analysis provided to you is the source of truth. "[m
+[32m+[m[32m    "Explain only the evidence contained in the supplied analysis. "[m
+[32m+[m[32m    "Do not invent fraud signals, numbers, vendors, transactions, GST information, or historical information. "[m
+[32m+[m[32m    "Do not change the risk score or risk level. "[m
+[32m+[m[32m    "Do not claim an invoice is definitively fraudulent. "[m
+[32m+[m[32m    "Explain why the system flagged the invoice and what evidence supports the finding. "[m
+[32m+[m[32m    "If the supplied analysis contains insufficient evidence, explicitly say so."[m
+[32m+[m[32m)[m
+[32m+[m
+[32m+[m[32mCHAT_SYSTEM_INSTRUCTION = ([m
+[32m+[m[32m    "You are the explanation layer of InvoiceGuard AI assistant. "[m
+[32m+[m[32m    "The deterministic analysis provided to you is the source of truth. "[m
+[32m+[m[32m    "Explain only the evidence contained in the supplied analysis. "[m
+[32m+[m[32m    "Do not invent fraud signals, numbers, vendors, transactions, GST information, or historical information. "[m
+[32m+[m[32m    "Do not change the risk score or risk level. "[m
+[32m+[m[32m    "Do not claim an invoice is definitively fraudulent. "[m
+[32m+[m[32m    "Answer questions ONLY from the supplied invoice analysis/context. "[m
+[32m+[m[32m    "If the question cannot be answered from the available data, explicitly state that the information is not available."[m
+[32m+[m[32m)[m
+ [m
+ [m
+ def get_gemini_client():[m
+     """Returns Gemini client if API key is present."""[m
+[32m+[m[32m    load_local_env()[m
+[32m+[m[32m    if not GENAI_AVAILABLE:[m
+[32m+[m[32m        logger.warning("[DIAGNOSTIC] google-genai SDK present: NO")[m
+[32m+[m[32m        return None[m
+     api_key = os.getenv("GEMINI_API_KEY")[m
+[31m-    if not api_key:[m
+[32m+[m[32m    if not api_key or not api_key.strip():[m
+[32m+[m[32m        logger.warning("[DIAGNOSTIC] GEMINI_API_KEY present: NO")[m
+         return None[m
+[32m+[m
+[32m+[m[32m    logger.info("[DIAGNOSTIC] GEMINI_API_KEY present: YES (Key length: %d chars)", len(api_key.strip()))[m
+     try:[m
+[31m-        return genai.Client(api_key=api_key)[m
+[31m-    except Exception:[m
+[32m+[m[32m        return genai.Client(api_key=api_key.strip())[m
+[32m+[m[32m    except Exception as e:[m
+[32m+[m[32m        logger.error("[DIAGNOSTIC] Client initialization FAILED. Exception [%s]: %s", type(e).__name__, str(e))[m
+         return None[m
+ [m
+ [m
+[31m-def generate_invoice_explanation(invoice_data: Dict[str, Any], risk_data: Dict[str, Any]) -> str:[m
+[32m+[m[32mdef generate_invoice_explanation(invoice_data: Dict[str, Any], risk_data: Optional[Dict[str, Any]] = None) -> str:[m
+     """[m
+[31m-    Generates an executive natural language explanation of why the invoice received its risk rating.[m
+[32m+[m[32m    Generates a Gemini AI natural language explanation based strictly on the deterministic analysis.[m
+     """[m
+[32m+[m[32m    logger.info("[DIAGNOSTIC] Explanation request received.")[m
+     client = get_gemini_client()[m
+[31m-    vendor_name = invoice_data.get("vendor_name", "Vendor")[m
+[31m-    amount = invoice_data.get("total_amount", 0)[m
+[31m-    score = risk_data.get("score", 50)[m
+[31m-    risk_level = risk_data.get("risk_level", "Review Required")[m
+[32m+[m[32m    if not client:[m
+[32m+[m[32m        logger.warning("[DIAGNOSTIC] Gemini Client unavailable. Returning fallback explanation.")[m
+[32m+[m[32m        return FALLBACK_EXPLANATION[m
+[32m+[m
+[32m+[m[32m    vendor = invoice_data.get("vendor") or invoice_data.get("vendor_name", "Unknown Vendor")[m
+[32m+[m[32m    inv_number = invoice_data.get("invoice_number", "N/A")[m
+[32m+[m[32m    score = invoice_data.get("risk_score")[m
+[32m+[m[32m    if score is None:[m
+[32m+[m[32m        score = risk_data.get("score") if risk_data else invoice_data.get("threat_score", 0)[m
+[32m+[m
+[32m+[m[32m    risk_level = invoice_data.get("risk_level")[m
+[32m+[m[32m    if not risk_level:[m
+[32m+[m[32m        risk_level = risk_data.get("risk_level") if risk_data else "SAFE"[m
+[32m+[m
+     signals = invoice_data.get("signals", [])[m
+[32m+[m[32m    financial_breakdown = invoice_data.get("financial_breakdown", {})[m
+ [m
+[31m-    if client:[m
+[31m-        try:[m
+[31m-            prompt = f"""You are InvoiceGuard AI, a FinTech audit specialist.[m
+[31m-Analyze this invoice assessment and provide a concise 2-paragraph executive explanation for finance officers.[m
+[31m-Avoid saying absolute fraud. Use terms like 'Unusual Activity', 'Review Required', 'Verification Signal', 'Potential Tampering'.[m
+[32m+[m[32m    structured_analysis = {[m
+[32m+[m[32m        "invoice_number": inv_number,[m
+[32m+[m[32m        "vendor": vendor,[m
+[32m+[m[32m        "risk_score": score,[m
+[32m+[m[32m        "risk_level": risk_level,[m
+[32m+[m[32m        "signals": signals[m
+[32m+[m[32m    }[m
+[32m+[m[32m    if financial_breakdown:[m
+[32m+[m[32m        structured_analysis["financial_breakdown"] = financial_breakdown[m
+ [m
+[31m-Invoice Details:[m
+[31m-- Vendor: {vendor_name}[m
+[31m-- Total Amount: INR {amount:,.2f}[m
+[31m-- Heuristic Risk Score: {score}/100 ({risk_level})[m
+[31m-- Detected Signals: {json.dumps(signals, indent=2)}[m
+[32m+[m[32m    prompt = ([m
+[32m+[m[32m        "Supplied Structured Deterministic Analysis:\n"[m
+[32m+[m[32m        f"{json.dumps(structured_analysis, indent=2, default=str)}\n\n"[m
+[32m+[m[32m        "Provide a concise, professional explanation suitable for a fraud analyst or judge."[m
+[32m+[m[32m    )[m
+ [m
+[31m-Keep it professional, crisp, and actionable."""[m
+[31m-            response = client.models.generate_content([m
+[31m-                model='gemini-2.5-flash',[m
+[31m-                contents=prompt[m
+[31m-            )[m
+[31m-            if response and response.text:[m
+[31m-                return response.text[m
+[31m-        except Exception as e:[m
+[31m-            pass[m
+[32m+[m[32m    logger.info("[DIAGNOSTIC] Gemini model being used: '%s'", GEMINI_MODEL)[m
+[32m+[m[32m    logger.info("[DIAGNOSTIC] Gemini explanation request started.")[m
+ [m
+[31m-    # High quality deterministic synthesis[m
+[31m-    if score > 75:[m
+[31m-        summary = f"Invoice from {vendor_name} for ₹{amount:,.2f} has been assigned a High Risk rating ({score}/100). Primary anomalies include critical discrepancies in payment routing and potential typographical/glyph modifications. Verification against historical ledgers indicates significant divergence from standard procurement baselines."[m
+[31m-    elif score > 25:[m
+[31m-        summary = f"{vendor_name} (₹{amount:,.2f}) requires manual review ({score}/100). The heuristic pipeline flagged an uncharacteristic volume spike and a newly introduced bank payout destination that does not match the 14 previously settled invoices on record."[m
+[31m-    else:[m
+[31m-        summary = f"Invoice from {vendor_name} for ₹{amount:,.2f} passed all deterministic verification checkpoints ({score}/100 Safe). GSTIN checksum is valid, line item math reconciles with 18% GST rules, and bank coordinates match verified KYC on file."[m
+[31m-    [m
+[31m-    return summary[m
+[32m+[m[32m    try:[m
+[32m+[m[32m        config = types.GenerateContentConfig([m
+[32m+[m[32m            system_instruction=SYSTEM_INSTRUCTION,[m
+[32m+[m[32m            temperature=0.2,[m
+[32m+[m[32m            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)[m
+[32m+[m[32m        )[m
+[32m+[m[32m        response = client.models.generate_content([m
+[32m+[m[32m            model=GEMINI_MODEL,[m
+[32m+[m[32m            contents=prompt,[m
+[32m+[m[32m            config=config[m
+[32m+[m[32m        )[m
+[32m+[m[32m        if response and response.text and response.text.strip():[m
+[32m+[m[32m            logger.info("[DIAGNOSTIC] Gemini explanation request SUCCEEDED (%d chars).", len(response.text.strip()))[m
+[32m+[m[32m            return response.text.strip()[m
+[32m+[m[32m        else:[m
+[32m+[m[32m            logger.warning("[DIAGNOSTIC] Gemini explanation request returned empty text.")[m
+[32m+[m[32m    except Exception as e:[m
+[32m+[m[32m        logger.error("[DIAGNOSTIC] Gemini explanation request FAILED. Exception [%s]: %s", type(e).__name__, str(e))[m
+[32m+[m
+[32m+[m[32m    return FALLBACK_EXPLANATION[m
+ [m
+ [m
+ def chat_with_invoiceguard([m
+[36m@@ -77,95 +164,106 @@[m [mdef chat_with_invoiceguard([m
+     chat_history: Optional[List[Dict[str, str]]] = None[m
+ ) -> Dict[str, Any]:[m
+     """[m
+[31m-    Answers questions about a specific invoice or general compliance rules.[m
+[32m+[m[32m    Answers user questions about an invoice strictly using the supplied deterministic context.[m
+     """[m
+[32m+[m[32m    logger.info("[DIAGNOSTIC] Chat request received. Query: '%s'", query)[m
+     client = get_gemini_client()[m
+     invoice_context = invoice_context or {}[m
+[31m-    vendor = invoice_context.get("vendor_name", "the vendor")[m
+[31m-    inv_num = invoice_context.get("invoice_number", "INV-2026-0918")[m
+[31m-    [m
+[32m+[m
+     if client:[m
+[32m+[m[32m        logger.info("[DIAGNOSTIC] Gemini model being used: '%s'", GEMINI_MODEL)[m
+[32m+[m[32m        logger.info("[DIAGNOSTIC] Gemini chat request started.")[m
+         try:[m
+[31m-            system_instruction = """You are InvoiceGuard Assistant, an expert AI copilot embedded in a FinTech & Commerce invoice verification dashboard.[m
+[31m-Answer the user's questions about the selected invoice clearly and accurately using the provided telemetry.[m
+[31m-Always maintain objective, non-accusatory language. Do not state absolute guilt; reference evidence signals, baselines, and banking history."""[m
+[31m-            [m
+[31m-            context_str = f"Current Invoice Data: {json.dumps(invoice_context, default=str)}"[m
+[31m-     

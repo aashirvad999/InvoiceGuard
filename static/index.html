@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>InvoiceGuard — Forensic Invoice Fraud &amp; Tampering Inspection</title>
+  
+  <!-- Fonts: Space Grotesk for Headings/Chrome & JetBrains Mono for Numeric Data -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #0B0F14;
+        color: #F8FAFC;
+      }
+    }
+
+    /* Monospace for numeric & data values */
+    .font-mono, [data-mono] {
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    /* Faint 1px Grain/Noise Overlay */
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* Shield Logo Continuous Scan Line */
+    .shield-logo-box {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 184, 217, 0.3);
+      box-shadow: 0 0 10px rgba(0, 184, 217, 0.15);
+      transition: all 0.3s ease;
+    }
+    .shield-logo-box:hover {
+      border-color: #00B8D9;
+      box-shadow: 0 0 22px rgba(0, 184, 217, 0.45);
+    }
+    .shield-scan-line {
+      position: absolute;
+      top: -100%;
+      left: 0;
+      width: 100%;
+      height: 60%;
+      background: linear-gradient(to bottom, transparent, rgba(0, 184, 217, 0.75), transparent);
+      animation: shieldScan 4s linear infinite;
+      pointer-events: none;
+    }
+    .shield-logo-box:hover .shield-scan-line {
+      animation: shieldScan 1.2s linear infinite;
+    }
+    @keyframes shieldScan {
+      0% { top: -60%; }
+      100% { top: 130%; }
+    }
+
+    /* Header Nav Link Underline Grow from Center */
+    .nav-link {
+      position: relative;
+      transition: color 0.2s ease;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0%;
+      height: 2px;
+      background-color: #4285F4;
+      box-shadow: 0 0 8px rgba(66, 133, 244, 0.8);
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 1px;
+    }
+    .nav-link:hover::after, .nav-link.active::after {
+      width: 70%;
+    }
+
+    /* Forensic Card Edge Sheen */
+    .forensic-card {
+      position: relative;
+      background-color: #17212B;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .forensic-card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, transparent 20%, rgba(0, 184, 217, 0.35) 50%, transparent 80%);
+      background-size: 200% 200%;
+      background-position: 0% 0%;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease, background-position 0.6s ease;
+    }
+    .forensic-card:hover::before {
+      opacity: 1;
+      background-position: 100% 100%;
+    }
+
+    /* Laser Sweep Line in Upload Zone */
+    #dropzone-laser-scan {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #00B8D9, transparent);
+      box-shadow: 0 0 15px #00B8D9, 0 0 30px #00B8D9;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 15;
+    }
+    .laser-active #dropzone-laser-scan {
+      opacity: 1;
+      animation: laserSweep 2s ease-in-out infinite;
+    }
+    @keyframes laserSweep {
+      0% { top: 0%; opacity: 0.8; }
+      50% { top: 96%; opacity: 1; }
+      100% { top: 0%; opacity: 0.8; }
+    }
+
+    /* Pulse on drop */
+    .drop-pulse {
+      animation: dropPulseAnim 0.6s ease-out;
+    }
+    @keyframes dropPulseAnim {
+      0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.6); }
+      100% { box-shadow: 0 0 50px 20px rgba(66, 133, 244, 0); }
+    }
+
+    /* Primary CTA Button Glow & Tactile Feedback */
+    .btn-primary-glow {
+      background-color: #4285F4 !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 0 20px -4px rgba(66, 133, 244, 0.45);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    .btn-primary-glow:hover {
+      background-color: #3367D6 !important;
+      box-shadow: 0 0 28px 2px rgba(66, 133, 244, 0.7);
+      transform: translateY(-1px);
+    }
+    .btn-primary-glow:active {
+      transform: scale(0.96) translateY(0) !important;
+      box-shadow: 0 0 12px -2px rgba(66, 133, 244, 0.4);
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(66, 133, 244, 0.4); }
+
+    /* Media Query reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .shield-scan-line, #dropzone-laser-scan, .laser-active #dropzone-laser-scan {
+        animation: none !important;
+        display: none !important;
+      }
+      #cursor-glow {
+        display: none !important;
+      }
+      .nav-link::after {
+        transition: none !important;
+      }
+    }
+  </style>
+
+  <!-- Tailwind CDN & Custom Tokens -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#17212B",
+            "background": "#0B0F14",
+            "on-surface": "#F8FAFC",
+            "on-surface-variant": "#94A3B8",
+            "surface-container-lowest": "#111820",
+            "surface-container-low": "#111820",
+            "surface-container": "#17212B",
+            "surface-container-high": "#1C2936",
+            "surface-container-highest": "#223142",
+            "surface-bright": "#283A4E",
+            
+            "primary": "#4285F4",
+            "primary-container": "#1A365D",
+            "on-primary": "#FFFFFF",
+            "on-primary-container": "#D2E3FC",
+            
+            "secondary": "#34A853",
+            "secondary-container": "#0D381E",
+            "on-secondary": "#FFFFFF",
+
+            "warning": "#FBBC05",
+            "warning-container": "#3D2E00",
+            "on-warning": "#000000",
+            
+            "tertiary": "#EA4335",
+            "tertiary-container": "#3C1715",
+            "on-tertiary": "#FFFFFF",
+            
+            "error": "#EA4335",
+            "error-container": "#3C1715",
+            "outline": "#94A3B8",
+            "outline-variant": "#1F2B3A",
+
+            "accent": "#00B8D9",
+            "ai-accent": "#00B8D9"
+          },
+          fontFamily: {
+            sans: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased selection:bg-primary selection:text-on-primary min-h-screen relative overflow-x-hidden">
+
+  <!-- Faint 1px Noise Overlay -->
+  <div class="grain-overlay"></div>
+
+  <!-- Custom Cursor Glow (Default increased intensity & radius) -->
+  <div id="cursor-glow" class="fixed top-0 left-0 w-[480px] h-[480px] rounded-full pointer-events-none z-40 transition-opacity duration-300 opacity-0" style="background: radial-gradient(circle, rgba(0, 184, 217, 0.35) 0%, rgba(0, 184, 217, 0) 70%); mix-blend-mode: screen; filter: blur(45px); transform: translate(-50%, -50%);"></div>
+
+  <!-- ================= STICKY GLOBAL HEADER ================= -->
+  <header class="sticky top-0 z-50 w-full backdrop-blur-xl bg-[#0B0F14]/85 border-b border-[#4285F4]/15 transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <a href="#overview" class="flex items-center gap-3 group">
+        <div class="w-8 h-8 rounded-lg bg-[#17212B] border border-[#00B8D9]/30 flex items-center justify-center text-[#00B8D9] group-hover:border-[#00B8D9] transition-all shadow-[0_0_10px_rgba(0,184,217,0.15)] shield-logo-box">
+          <span class="material-symbols-outlined text-[18px]">shield</span>
+          <div class="shield-scan-line"></div>
+        </div>
+        <div class="flex items-center gap-0.5">
+          <span id="brand-wordmark" class="font-bold text-[19px] tracking-tight text-[#F8FAFC] font-sans">InvoiceGuard</span>
+          <span id="brand-cursor" class="font-mono font-bold text-[18px] text-[#4285F4] select-none">_</span>
+        </div>
+      </a>
+
+      <!-- Desktop Smooth Section Navigation (User Mode) -->
+      <nav id="user-nav-bar" class="hidden md:flex items-center gap-1.5 bg-[#111820]/90 p-1.5 rounded-full border border-white/5 shadow-inner">
+        <a href="#overview" class="nav-link px-4 py-1.5 text-xs font-medium text-[#F8FAFC] transition-all" data-section="overview">Overview</a>
+        <a href="#analysis-spotlight" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-all" data-section="analysis-spotlight">Analysis</a>
+        <a href="#invoices" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-all" data-section="invoices">Invoices</a>
+        <a href="#vendors" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-all" data-section="vendors">Vendors</a>
+        <a href="#feedback" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-all" data-section="feedback">Feedback</a>
+      </nav>
+
+      <!-- Desktop Navigation for Admin Mode (Hidden by default) -->
+      <nav id="admin-nav-bar" class="hidden items-center gap-1 bg-[#111820]/90 p-1 rounded-full border border-error/30 shadow-inner">
+        <span class="px-3.5 py-1 rounded-full text-xs font-mono font-bold text-error bg-error/10">🛡 ADMIN SENTINEL</span>
+        <button onclick="exitAdminMode()" class="px-3 py-1 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full font-medium transition-colors font-sans">
+          Exit Admin Mode
+        </button>
+      </nav>
+
+      <!-- Header Action Group -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        <!-- Admin Login Shortcut Trigger -->
+        <button onclick="openAdminLoginModal()" id="header-admin-login-btn" title="Admin Portal Login (admin:admins)" class="px-3.5 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-outline hover:text-on-surface border border-white/5 text-xs font-mono font-medium transition-colors">
+          Admin
+        </button>
+
+        <!-- Persona Switcher Pill (Spacious User Profile) -->
+        <div onclick="openDemoUserModal()" class="flex items-center gap-3 px-3.5 py-1.5 bg-surface-container-low hover:bg-surface-container rounded-xl border border-white/10 cursor-pointer transition-all shadow-sm hover:border-white/20">
+          <img id="header-avatar" src="https://lh3.googleusercontent.com/aida/AEtjO1WrkfpzKKRxpDEqWEKJZT85NKinPIEcpUKVrt4vxf-YAaRh1oPrIj8nuVoAhiawYnB4J3ynGcWujvFk2vSudd0Wi_WkC61Pm3HIq1DdJzIWt8Du-tlbFbZFfXzDM-gZxfycpBtAyHlaOMCuv2uVqsbrY3gKXQ6vr_a5QldJIAHhXtxbYR1B2GRGeiHumVJAs-UHYMgjfg6XcnFuE9W9XX5Fz5apO-4LR-vq__pAFEex3BB83ssxRClAyh0" class="w-7 h-7 rounded-full object-cover shadow-sm">
+          <div class="flex flex-col text-left min-w-[100px] sm:min-w-[120px]">
+            <span class="text-xs font-bold text-on-surface leading-tight font-sans" id="user-display-name">Alex Vance</span>
+            <span class="text-[11px] text-on-surface-variant font-mono leading-tight truncate max-w-[130px]" id="user-display-role">Finance Sec Lead</span>
+          </div>
+          <span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+        </div>
+
+        <!-- Clear Invoices Button next to User Profile -->
+        <button onclick="clearUserInvoices()" title="Clear all uploaded invoices for current profile" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-error/10 hover:bg-error/20 text-error border border-error/20 text-xs font-semibold transition-all font-sans">
+          <span class="material-symbols-outlined text-[16px]">delete_sweep</span>
+          <span class="hidden sm:inline">Clear Invoices</span>
+        </button>
+      </div>
+
+    </div>
+    <!-- Scroll Progress Indicator Bar -->
+    <div id="scroll-progress-bar" class="h-[2px] bg-gradient-to-r from-[#4285F4] via-[#00B8D9] to-[#4285F4] w-0 transition-all duration-75 shadow-[0_0_8px_rgba(66,133,244,0.6)]"></div>
+  </header>
+
+  <!-- ================= MAIN USER HOMEPAGE ================= -->
+  <main id="user-main-view" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-16 relative">
+
+    <!-- Subtle Ambient Lighting Behind Hero -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[650px] h-[350px] bg-primary/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
+    <div class="absolute top-48 right-1/4 w-[400px] h-[300px] bg-secondary/5 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+
+    <!-- SECTION 1: HERO & LARGE UPLOAD FOCUS -->
+    <section id="overview" class="relative flex flex-col items-center text-center pt-8 pb-4">
+      <!-- Interactive Canvas Dot Grid Background -->
+      <canvas id="hero-dot-canvas" class="absolute inset-0 w-full h-full pointer-events-none -z-10"></canvas>
+
+      <!-- Status Pill -->
+      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#17212B]/90 border border-[#00B8D9]/30 text-xs font-mono font-medium text-[#00B8D9] mb-6 shadow-[0_0_15px_rgba(0,184,217,0.12)]">
+        <span class="w-2 h-2 rounded-full bg-[#00B8D9] animate-pulse"></span>
+        <span class="tracking-wider uppercase text-[11px]">INVOICE FORENSIC SECURITY</span>
+      </div>
+
+      <!-- Large Headline -->
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#F8FAFC] max-w-3xl leading-[1.1] font-sans">
+        Verify before you pay.
+      </h1>
+
+      <!-- Supporting Subhead -->
+      <p class="mt-4 text-base sm:text-lg text-[#94A3B8] max-w-2xl leading-relaxed font-sans">
+        Analyze invoices for suspicious financial, vendor, and document tampering signals before approving disbursement.
+      </p>
+
+      <!-- THE LARGE FOCAL UPLOAD ZONE -->
+      <div class="w-full max-w-lg mt-6">
+        <div 
+          id="hero-dropzone" 
+          class="relative group rounded-2xl bg-[#111820]/95 hover:bg-[#17212B] border-2 border-dashed border-[#1F2B3A] hover:border-[#4285F4]/60 p-5 sm:p-6 flex flex-col items-center justify-center gap-3 transition-all duration-300 cursor-pointer shadow-xl forensic-card overflow-hidden"
+          onclick="document.getElementById('main-file-input').click()"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleFileDrop(event)"
+        >
+          <!-- Horizontal Laser Scan Line (Sweeps top to bottom on drag over) -->
+          <div id="dropzone-laser-scan"></div>
+
+          <input type="file" id="main-file-input" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.json" onchange="handleHeroFileSelect(event)">
+          
+          <!-- Animated Icon -->
+          <div class="w-12 h-12 rounded-xl bg-[#17212B] border border-[#4285F4]/30 flex items-center justify-center text-[#4285F4] group-hover:scale-105 group-hover:border-[#4285F4] transition-all shadow-[0_0_12px_rgba(66,133,244,0.2)]">
+            <span class="material-symbols-outlined text-[26px]" id="dropzone-icon">cloud_upload</span>
+          </div>
+
+          <!-- Dropzone Headline -->
+          <div class="flex flex-col gap-0.5">
+            <span class="text-base sm:text-lg font-bold text-[#F8FAFC] tracking-tight font-sans" id="dropzone-title">
+              DROP YOUR INVOICE HERE
+            </span>
+            <span class="text-xs text-[#94A3B8] font-sans" id="dropzone-subtitle">
+              Drag &amp; drop or browse files from your computer
+            </span>
+          </div>
+
+          <!-- Primary CTA Button -->
+          <button type="button" class="mt-1 px-4 py-2 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center gap-1.5 btn-primary-glow font-sans">
+            <span class="material-symbols-outlined text-[16px]">add</span>
+            <span>Upload Invoice</span>
+          </button>
+
+          <!-- Format Pills -->
+          <div class="flex items-center gap-2 mt-1 text-[11px] font-mono text-outline">
+            <span class="px-2 py-0.5 rounded bg-surface-container-high/80 border border-white/5">PDF</span>
+            <span>·</span>
+            <span class="px-2 py-0.5 rounded bg-surface-container-high/80 border border-white/5">PNG</span>
+            <span>·</span>
+            <span class="px-2 py-0.5 rounded bg-surface-container-high/80 border border-white/5">JPG</span>
+            <span>·</span>
+            <span>Max 25MB</span>
+          </div>
+
+          <!-- Live Multi-Stage Processing Overlay (Hidden by Default) -->
+          <div id="upload-progress-overlay" class="absolute inset-0 bg-surface-container-low/95 rounded-2xl backdrop-blur-md flex flex-col items-center justify-center p-6 gap-4 hidden z-20">
+            <div class="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <div class="text-sm font-semibold text-on-surface" id="progress-stage-title">Analyzing Invoice Payload...</div>
+            <div class="flex flex-col gap-2 text-xs font-mono text-left w-full max-w-xs" id="progress-steps-list">
+              <div class="flex items-center gap-2 text-secondary" id="step-1">
+                <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                <span>Invoice uploaded ✓</span>
+              </div>
+              <div class="flex items-center gap-2 text-primary" id="step-2">
+                <span class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                <span>Extracting invoice information ●</span>
+              </div>
+              <div class="flex items-center gap-2 text-outline" id="step-3">
+                <span class="material-symbols-outlined text-[16px]">radio_button_unchecked</span>
+                <span>Running verification checks ○</span>
+              </div>
+              <div class="flex items-center gap-2 text-outline" id="step-4">
+                <span class="material-symbols-outlined text-[16px]">radio_button_unchecked</span>
+                <span>Comparing historical patterns ○</span>
+              </div>
+              <div class="flex items-center gap-2 text-outline" id="step-5">
+                <span class="material-symbols-outlined text-[16px]">radio_button_unchecked</span>
+                <span>Generating assessment ○</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1-Click Test Invoices Quick-Bar -->
+        <div class="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span class="text-outline font-mono text-[11px] uppercase mr-1">Load Demo Scenarios:</span>
+          <button onclick="loadDemoInvoice('INV-2026-0918')" class="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-tertiary/30 text-tertiary font-mono text-[11px] flex items-center gap-1.5 transition-all">
+            <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+            <span>Tampered Font &amp; Volume Spike (ABC Tech)</span>
+          </button>
+          <button onclick="loadDemoInvoice('INV-8831')" class="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-secondary/30 text-secondary font-mono text-[11px] flex items-center gap-1.5 transition-all">
+            <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            <span>Safe Baseline (Cloudflare)</span>
+          </button>
+          <button onclick="loadDemoInvoice('INV-7729')" class="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-error/30 text-error font-mono text-[11px] flex items-center gap-1.5 transition-all">
+            <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+            <span>IBAN Route Mismatch (Zenith Supplies)</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================= SECTION 2: ACTIVE INVOICE ANALYSIS SPOTLIGHT ================= -->
+    <section id="analysis-spotlight" class="scroll-mt-20 flex flex-col gap-6">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded bg-primary/10 text-primary flex items-center justify-center">
+            <span class="material-symbols-outlined text-[18px]">find_in_page</span>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold tracking-tight text-on-surface">Invoice Analysis Spotlight</h2>
+            <p class="text-xs text-on-surface-variant">Live deterministic &amp; OCR forensics breakdown for the selected record.</p>
+          </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- User Feedback Assessment Pill -->
+          <div class="flex items-center bg-surface-container p-1 rounded-lg border border-white/5 text-xs font-mono">
+            <span class="text-outline text-[11px] px-2">Mark:</span>
+            <button onclick="submitUserInvoiceFeedback('Legitimate')" id="btn-feedback-legit" class="px-2 py-0.5 rounded text-secondary hover:bg-secondary/10 font-bold transition-colors">
+              ✓ Legitimate
+            </button>
+            <button onclick="submitUserInvoiceFeedback('Suspicious')" id="btn-feedback-susp" class="px-2 py-0.5 rounded text-error hover:bg-error/10 font-bold transition-colors">
+              ⚠ Suspicious
+            </button>
+          </div>
+
+          <button onclick="downloadActivePDF()" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-on-surface text-xs font-medium flex items-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[15px]">file_download</span>
+            <span>PDF</span>
+          </button>
+          <button onclick="openFlagModalForActive()" class="px-3 py-1.5 rounded-lg bg-error/10 hover:bg-error/20 border border-error/30 text-error text-xs font-medium flex items-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[15px]">flag</span>
+            <span>Report Vendor</span>
+          </button>
+          <button id="btn-spotlight-hold" onclick="togglePaymentHold()" class="px-3.5 py-1.5 rounded-lg bg-primary text-on-primary hover:bg-white text-xs font-semibold flex items-center gap-1.5 transition-all">
+            <span class="material-symbols-outlined text-[15px]">pause_circle</span>
+            <span id="spotlight-hold-text">Approve Payment (Hold)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Invoice Hero Meta Strip -->
+      <div class="rounded-2xl bg-surface-container-low border border-white/5 p-6 shadow-lg relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <!-- Vendor & ID -->
+          <div class="flex flex-col gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight" id="spotlight-vendor-name">ABC Technologies</h3>
+              <span id="spotlight-vendor-badge" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-mono text-[11px] font-semibold border border-primary/20">
+                <span class="material-symbols-outlined text-[13px]">verified</span>
+                Verified Vendor
+              </span>
+              <span id="spotlight-inv-num" class="font-mono text-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded border border-white/5">
+                #INV-2026-0918
+              </span>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-on-surface-variant font-mono">
+              <span class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[15px] text-outline">calendar_today</span>
+                Issued: <span id="spotlight-issue-date" class="text-on-surface font-sans">Oct 24, 2026</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[15px] text-outline">schedule</span>
+                Ingested: <span id="spotlight-received-date" class="text-on-surface font-sans">Oct 24, 2026 · 14:32 IST</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[15px] text-outline">fingerprint</span>
+                SHA-256: <span id="spotlight-sha256" class="text-on-surface">7f8b9d...4a12</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Billed Amount Callout -->
+          <div class="flex flex-col lg:items-end bg-surface-container px-6 py-3.5 rounded-xl border border-white/5">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-on-surface-variant">Billed Invoice Total</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <span class="text-2xl sm:text-3xl font-extrabold text-on-surface font-mono" id="spotlight-amount">₹1,59,000</span>
+              <span class="text-xs text-outline font-mono">INR</span>
+            </div>
+            <span id="spotlight-variance" class="text-xs font-mono text-tertiary flex items-center gap-1 mt-1">
+              <span class="material-symbols-outlined text-[13px]">report_problem</span>
+              Historical variance: +169.5%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Centerpiece: Risk Gauge & Evidence Matrix -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Risk Gauge (Square compact 4 cols) -->
+        <div class="lg:col-span-4 rounded-2xl bg-surface-container-low border border-white/5 p-4 sm:p-5 flex flex-col justify-between shadow-sm aspect-square max-h-[310px]">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase tracking-wider text-on-surface-variant">Threat Score</span>
+            <span id="spotlight-risk-badge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary font-mono text-[11px] font-bold border border-tertiary/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+              Review Required
+            </span>
+          </div>
+
+          <!-- SVG Circular Meter (Compact 112px circle) -->
+          <div class="flex items-center justify-center my-2">
+            <div class="relative w-28 h-28 flex items-center justify-center">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                <circle class="text-surface-container-high" cx="60" cy="60" fill="transparent" r="50" stroke="currentColor" stroke-width="8"></circle>
+                <circle id="spotlight-meter-circle" class="text-tertiary transition-all duration-1000" cx="60" cy="60" fill="transparent" r="50" stroke="currentColor" stroke-dasharray="314.16" stroke-dashoffset="81.68" stroke-linecap="round" stroke-width="8"></circle>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span class="text-2xl font-extrabold text-on-surface font-mono" id="spotlight-score-num">74</span>
+                <span class="text-[9px] font-mono text-on-surface-variant uppercase tracking-wider">/ 100 RISK</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Checkpoint Tally -->
+          <div class="flex flex-col gap-1 pt-2 border-t border-white/5">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-on-surface-variant">Checkpoint Breakdown</span>
+              <span class="font-mono text-on-surface font-medium" id="spotlight-tally-text">3 Warnings · 2 Passed</span>
+            </div>
+            <div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden flex">
+              <div class="bg-tertiary h-full w-[60%]" id="spotlight-tally-warn"></div>
+              <div class="bg-secondary h-full w-[40%]" id="spotlight-tally-pass"></div>
+            </div>
+            <div class="flex items-center justify-between text-[10px] font-mono text-outline mt-0.5">
+              <span>Confidence: 98.4%</span>
+              <span>DeepOCR: 420ms</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evidence Matrix (8 cols) -->
+        <div class="lg:col-span-8 rounded-2xl bg-surface-container-low border border-white/5 p-6 flex flex-col">
+          <div class="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px] text-tertiary">troubleshoot</span>
+              <h3 class="text-base font-bold text-on-surface">Why was this flagged?</h3>
+            </div>
+            <span class="text-xs font-mono text-on-surface-variant" id="spotlight-signals-count">5 forensic checkpoints</span>
+          </div>
+
+          <!-- Collapsible Evidence Cards Container -->
+          <div class="flex flex-col gap-2.5" id="spotlight-evidence-container">
+            <!-- Dynamically populated via app.js -->
+          </div>
+
+          <!-- AI Explanation Container (Gemini AI Layer) -->
+          <div id="spotlight-ai-explanation" class="mt-4 pt-4 border-t border-white/5">
+            <!-- Dynamically populated via app.js -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Deep Forensic Tabs -->
+      <div class="rounded-2xl bg-surface-container-low border border-white/5 p-6 shadow-sm">
+        <!-- Tabs Header -->
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-white/5 overflow-x-auto">
+          <div class="flex items-center gap-1">
+            <button onclick="switchDeepTab('tab-line-items')" id="btn-deep-line-items" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-surface-container text-on-surface transition-colors shadow-sm">Line Items</button>
+            <button onclick="switchDeepTab('tab-financial')" id="btn-deep-financial" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">Financial Discrepancy</button>
+            <button onclick="switchDeepTab('tab-document')" id="btn-deep-document" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">Document &amp; Font Inspection</button>
+            <button onclick="switchDeepTab('tab-vendor')" id="btn-deep-vendor" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">Vendor Profile</button>
+            <button onclick="switchDeepTab('tab-audit')" id="btn-deep-audit" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">Audit Trail Log</button>
+          </div>
+          <span class="hidden sm:flex items-center gap-1 text-[11px] font-mono text-outline">
+            <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Deterministic Core v4.8
+          </span>
+        </div>
+
+        <!-- Tab 1: Line Items -->
+        <div id="tab-line-items" class="deep-tab-pane flex flex-col">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="bg-surface-container font-mono text-outline uppercase tracking-wider">
+                  <th class="py-2.5 px-4 rounded-l">Item Description</th>
+                  <th class="py-2.5 px-4 text-right">Qty</th>
+                  <th class="py-2.5 px-4 text-right">Unit Price</th>
+                  <th class="py-2.5 px-4 text-right">Calculated Total</th>
+                  <th class="py-2.5 px-4 rounded-r">Status</th>
+                </tr>
+              </thead>
+              <tbody id="spotlight-line-items-body" class="divide-y divide-white/5 font-mono">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Financial Discrepancy -->
+        <div id="tab-financial" class="deep-tab-pane hidden flex flex-col gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-surface-container p-4 rounded-xl border border-white/5 flex flex-col gap-2 font-mono text-xs">
+              <span class="font-sans font-bold text-on-surface text-sm">Tax Reconciliation Model</span>
+              <div class="flex justify-between text-on-surface-variant pt-1">
+                <span>Taxable Subtotal (Standard PO)</span>
+                <span class="text-on-surface" id="fin-taxable-sub">₹50,000</span>
+              </div>
+              <div class="flex justify-between text-on-surface-variant">
+                <span>CGST (9.0%)</span>
+                <span class="text-on-surface" id="fin-cgst">₹4,500</span>
+              </div>
+              <div class="flex justify-between text-on-surface-variant">
+                <span>SGST (9.0%)</span>
+                <span class="text-on-surface" id="fin-sgst">₹4,500</span>
+              </div>
+              <div class="flex justify-between text-on-surface font-semibold pt-2 border-t border-white/5">
+                <span>System Expected Grand Total</span>
+                <span class="text-secondary" id="fin-exp-total">₹59,000</span>
+              </div>
+            </div>
+
+            <div class="bg-surface-container p-4 rounded-xl border border-white/5 flex flex-col justify-between">
+              <span class="text-xs font-mono uppercase tracking-wider text-error font-semibold">Unaccounted Surplus Gap</span>
+              <div class="my-2">
+                <span class="text-2xl font-mono font-bold text-error" id="fin-delta-num">+₹1,00,000 Delta</span>
+                <p class="text-xs text-on-surface-variant mt-1 leading-relaxed" id="fin-delta-desc">
+                  Exact delta directly corresponds to the 50x Mechanical Keyboard insertion not matching Purchase Order PO-2026-441.
+                </p>
+              </div>
+              <div class="p-2 rounded bg-surface-container-high text-outline text-[11px] font-mono">
+                Ledger Status: Uncorrelated item injection flagged.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Document & Font Inspection -->
+        <div id="tab-document" class="deep-tab-pane hidden flex flex-col gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Micro Glyph Comparison Visualizer -->
+            <div class="bg-surface-container p-4 rounded-xl border border-white/5 flex flex-col items-center justify-center text-center">
+              <span class="text-xs font-mono uppercase tracking-wider text-on-surface-variant mb-4 self-start">Subpixel Glyph Divergence</span>
+              <div class="flex items-center gap-8 my-2">
+                <div class="flex flex-col items-center">
+                  <span class="text-[10px] font-mono text-outline mb-1">Authentic (5)</span>
+                  <span class="text-4xl font-mono font-bold text-on-surface">5</span>
+                  <span class="text-[10px] font-mono text-secondary mt-1">Helvetica Bold</span>
+                </div>
+                <span class="text-outline text-sm">vs</span>
+                <div class="flex flex-col items-center p-2 rounded-lg bg-error/10 border border-error/30">
+                  <span class="text-[10px] font-mono text-error mb-1">Injected (0)</span>
+                  <span class="text-4xl font-mono font-bold text-error">0</span>
+                  <span class="text-[10px] font-mono text-error mt-1">Roboto Medium</span>
+                </div>
+              </div>
+              <span class="text-[11px] font-mono text-outline mt-3">Bounding Box: [412.4 x 188.0] · Kerning divergence: -14%</span>
+            </div>
+
+            <!-- PDF Metadata Audit -->
+            <div class="bg-surface-container p-4 rounded-xl border border-white/5 flex flex-col justify-between font-mono text-xs">
+              <span class="font-sans font-bold text-on-surface text-sm">PDF Metadata Audit</span>
+              <div class="flex flex-col gap-2 my-2" id="doc-meta-audit-list">
+                <div class="flex justify-between text-on-surface-variant">
+                  <span>Producer:</span>
+                  <span class="text-on-surface">Skia/PDF m122</span>
+                </div>
+                <div class="flex justify-between text-on-surface-variant">
+                  <span>Modification Tool:</span>
+                  <span class="text-tertiary">iText® 5.5.10 (Modified)</span>
+                </div>
+                <div class="flex justify-between text-on-surface-variant">
+                  <span>Revisions:</span>
+                  <span class="text-on-surface">2 Incremental Saves</span>
+                </div>
+                <div class="flex justify-between text-on-surface-variant">
+                  <span>Time Delta:</span>
+                  <span class="text-on-surface">+18m 22s post creation</span>
+                </div>
+              </div>
+              <button onclick="showToast('PyMuPDF deep font stream report downloaded.')" class="w-full py-1.5 bg-surface-container-high hover:bg-surface-container-highest rounded text-on-surface text-xs font-medium transition-colors">
+                View Full Forensic PDF Metadata
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Vendor Profile -->
+        <div id="tab-vendor" class="deep-tab-pane hidden flex flex-col gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="spotlight-vendor-profile-cards">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Tab 5: Audit Trail Log -->
+        <div id="tab-audit" class="deep-tab-pane hidden flex flex-col gap-2 font-mono text-xs" id="spotlight-audit-logs">
+          <!-- Dynamically populated -->
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= SECTION 3: RECENT INVOICES & RISK OVERVIEW ================= -->
+    <section id="invoices" class="scroll-mt-20 flex flex-col gap-6">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-white/5">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-on-surface">Recent Invoices</h2>
+          <p class="text-xs text-on-surface-variant">Filterable ledger of incoming invoices and verification signals.</p>
+        </div>
+
+        <!-- Filter Tabs & Quick Search -->
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-1 bg-surface-container p-1 rounded-lg border border-white/5 text-xs font-medium">
+            <button onclick="filterInvoicesBy('all')" class="inv-filter-btn active px-2.5 py-1 rounded bg-surface-container-high text-on-surface" data-f="all">All</button>
+            <button onclick="filterInvoicesBy('review')" class="inv-filter-btn px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface" data-f="review">
+              <span>Needs Review</span>
+              <span class="ml-1 text-tertiary font-mono text-[10px] bg-tertiary/10 px-1 py-0.2 rounded" id="cnt-rev">3</span>
+            </button>
+            <button onclick="filterInvoicesBy('passed')" class="inv-filter-btn px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface" data-f="passed">
+              <span>Passed</span>
+              <span class="ml-1 text-secondary font-mono text-[10px] bg-secondary/10 px-1 py-0.2 rounded" id="cnt-pass">138</span>
+            </button>
+            <button onclick="filterInvoicesBy('critical')" class="inv-filter-btn px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface" data-f="critical">
+              <span>Critical</span>
+              <span class="ml-1 text-error font-mono text-[10px] bg-error/10 px-1 py-0.2 rounded" id="cnt-crit">1</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-1 bg-surface-container px-2.5 py-1.5 rounded-lg border border-white/5 text-xs">
+            <span class="material-symbols-outlined text-[15px] text-outline">search</span>
+            <input id="invoices-filter-input" type="text" placeholder="Search vendor or ID..." class="bg-transparent border-none outline-none text-on-surface placeholder:text-outline w-32 sm:w-44 text-xs" oninput="filterInvoicesSearch(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoices Table Container -->
+      <div class="rounded-2xl bg-surface-container-low border border-white/5 overflow-hidden shadow-sm">
+        <div class="w-full overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-surface-container font-mono text-outline uppercase tracking-wider border-b border-white/5">
+                <th class="py-3 px-4 font-semibold">Invoice</th>
+                <th class="py-3 px-4 font-semibold">Vendor</th>
+                <th class="py-3 px-4 font-semibold">Date</th>
+                <th class="py-3 px-4 font-semibold text-right">Amount</th>
+                <th class="py-3 px-4 font-semibold">Risk Assessment</th>
+                <th class="py-3 px-4 font-semibold text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="invoices-table-body" class="divide-y divide-white/5">
+              <!-- Dynamically populated via app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= SECTION 4: VENDORS REGISTRY ================= -->
+    <section id="vendors" class="scroll-mt-20 flex flex-col gap-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-on-surface">Vendors</h2>
+          <p class="text-xs text-on-surface-variant">Trusted vendor registry, payment accounts on file, and trust index ratings.</p>
+        </div>
+        <button onclick="showToast('Vendor KYC Registration workflow active.')" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-medium text-on-surface flex items-center gap-1.5 self-start">
+          <span class="material-symbols-outlined text-[15px]">add</span>
+          <span>Register Vendor KYC</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="vendors-cards-grid">
+        <!-- Populated via app.js -->
+      </div>
+    </section>
+
+    <!-- ================= SECTION 5: VENDOR FEEDBACK & COMPLAINTS ================= -->
+    <section id="feedback" class="scroll-mt-20 flex flex-col gap-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-on-surface">Vendor Feedback &amp; Compliance</h2>
+          <p class="text-xs text-on-surface-variant">Recorded payment routing discrepancies, suspicious wire changes, and compliance flags.</p>
+        </div>
+        <button onclick="openFlagModalForActive()" class="px-3.5 py-1.5 rounded-lg bg-error/10 hover:bg-error/20 border border-error/30 text-error text-xs font-semibold flex items-center gap-1.5 self-start">
+          <span class="material-symbols-outlined text-[15px]">add_alert</span>
+          <span>Report a Vendor</span>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-3" id="feedback-complaints-list">
+        <!-- Populated via app.js -->
+      </div>
+    </section>
+
+    <!-- ================= SECTION 6: ASK INVOICEGUARD (AI ASSISTANT WORKBENCH) ================= -->
+    <section id="assistant" class="scroll-mt-20 flex flex-col gap-6 mb-12">
+      <div class="flex flex-col gap-1 pb-3 border-b border-white/5">
+        <div class="flex items-center gap-2 text-primary font-mono text-xs font-semibold">
+          <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+          <span>GEMINI 2.5 INTEGRATED COPILOT</span>
+        </div>
+        <h2 class="text-xl font-bold tracking-tight text-on-surface">Ask InvoiceGuard</h2>
+        <p class="text-xs text-on-surface-variant">Have questions about an invoice? Ask InvoiceGuard to explain what it found.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Main Chat Workbench (8 cols) -->
+        <div class="lg:col-span-8 rounded-2xl bg-surface-container-low border border-white/5 p-6 flex flex-col justify-between h-[480px]">
+          <!-- Chat Messages Container -->
+          <div class="flex flex-col gap-3 overflow-y-auto pr-2 custom-scroll" id="ai-chat-thread">
+            <!-- Messages populated via app.js -->
+          </div>
+
+          <!-- Input & Prompts -->
+          <div class="flex flex-col gap-2.5 pt-3 border-t border-white/5">
+            <!-- Quick Chips (Req 31: Suggested Questions) -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-mono">
+              <button onclick="sendQuickPrompt('Why was this invoice flagged?')" class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">
+                Why was this flagged?
+              </button>
+              <button onclick="sendQuickPrompt('Is the GST calculation correct?')" class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">
+                Is GST calculation correct?
+              </button>
+              <button onclick="sendQuickPrompt('What is unusual about this invoice?')" class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">
+                What is unusual?
+              </button>
+              <button onclick="sendQuickPrompt('Has this vendor used this bank account before?')" class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">
+                Bank account history?
+              </button>
+              <button onclick="sendQuickPrompt('Which line item caused the discrepancy?')" class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">
+                Which line item discrepancy?
+              </button>
+              <button onclick="sendQuickPrompt('Is this invoice similar to a previous invoice?')" class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">
+                Similar to previous?
+              </button>
+              <button onclick="draftComplianceEmailForActive()" class="px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary whitespace-nowrap transition-colors">
+                Draft Email to Vendor
+              </button>
+            </div>
+
+
+            <!-- Input Bar -->
+            <div class="flex items-center gap-2">
+              <input id="ai-chat-input" type="text" placeholder="Inquire about the active invoice..." class="w-full bg-surface-container text-on-surface text-xs px-4 py-2.5 rounded-xl border border-white/5 focus:outline-none focus:border-primary/50 placeholder:text-outline" onkeydown="if(event.key==='Enter') sendChatMessage()">
+              <button onclick="sendChatMessage()" class="p-2.5 rounded-xl bg-primary text-on-primary hover:bg-white transition-all flex items-center justify-center">
+                <span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Copilot Insights Sidebar (4 cols) -->
+        <div class="lg:col-span-4 flex flex-col gap-4">
+          <div class="rounded-2xl bg-surface-container-low border border-white/5 p-5 flex flex-col gap-3 text-xs">
+            <span class="font-mono text-[11px] uppercase tracking-wider text-outline font-semibold">Active Document Context</span>
+            <div class="flex flex-col gap-2 font-mono">
+              <div class="flex justify-between text-on-surface-variant">
+                <span>Selected:</span>
+                <span class="text-on-surface font-semibold" id="ai-context-inv">#INV-2026-0918</span>
+              </div>
+              <div class="flex justify-between text-on-surface-variant">
+                <span>Vendor:</span>
+                <span class="text-on-surface" id="ai-context-vendor">ABC Technologies</span>
+              </div>
+              <div class="flex justify-between text-on-surface-variant">
+                <span>Model Engine:</span>
+                <span class="text-primary">Gemini 2.5 Flash</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-surface-container-low border border-white/5 p-5 flex flex-col justify-between text-xs gap-3">
+            <div>
+              <span class="font-mono text-[11px] uppercase tracking-wider text-secondary font-semibold">Automated Action</span>
+              <h4 class="text-sm font-bold text-on-surface mt-1">Vendor Clarification Letter</h4>
+              <p class="text-on-surface-variant mt-1 leading-relaxed">
+                Generate a formal clarification request email regarding new bank accounts and volume spikes.
+              </p>
+            </div>
+            <button onclick="draftComplianceEmailForActive()" class="w-full py-2 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/10 text-on-surface font-semibold text-xs transition-colors">
+              Generate Draft Notice
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= DEDICATED ADMIN OPERATIONS SENTINEL (Role Protected) ================= -->
+  <div id="admin-main-view" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+    
+    <!-- Admin Hero Banner -->
+    <div class="rounded-3xl bg-gradient-to-r from-error/20 via-surface-container to-surface-container border border-error/30 p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-2xl">
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2 text-error font-mono text-xs font-bold uppercase tracking-wider">
+          <span class="w-2.5 h-2.5 rounded-full bg-error animate-ping"></span>
+          <span>ENTERPRISE COMPLIANCE ADMIN SENTINEL</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-on-surface tracking-tight">Cross-Tenant Fraud Intelligence Desk</h1>
+        <p class="text-sm text-on-surface-variant max-w-2xl">
+          Authorized CISO &amp; Treasury control center. Supervise global tenant ledgers, blacklist rogue vendor GSTINs, and manage automated escrow halts.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="exitAdminMode()" class="px-4 py-2 rounded-xl bg-surface-container-high hover:bg-surface-container-highest border border-white/10 text-on-surface font-medium text-xs transition-colors">
+          Exit Admin Mode
+        </button>
+      </div>
+    </div>
+
+    <!-- Admin Global Metrics Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="p-5 rounded-2xl bg-surface-container-low border border-white/5 flex flex-col gap-1">
+        <span class="text-xs font-mono text-outline uppercase">Active Tenant Orgs</span>
+        <span class="text-2xl font-mono font-bold text-on-surface" id="adm-stat-tenants">5 Orgs</span>
+      </div>
+      <div class="p-5 rounded-2xl bg-surface-container-low border border-white/5 flex flex-col gap-1">
+        <span class="text-xs font-mono text-outline uppercase">Total Invoices Audited</span>
+        <span class="text-2xl font-mono font-bold text-primary" id="adm-stat-invoices">142</span>
+      </div>
+      <div class="p-5 rounded-2xl bg-surface-container-low border border-white/5 flex flex-col gap-1">
+        <span class="text-xs font-mono text-outline uppercase">Total Payout Volume</span>
+        <span class="text-2xl font-mono font-bold text-secondary" id="adm-stat-vol">₹58.4L</span>
+      </div>
+      <div class="p-5 rounded-2xl bg-surface-container-low border border-error/30 flex flex-col gap-1 bg-error/5">
+        <span class="text-xs font-mono text-error uppercase font-bold">Total Volume At Risk</span>
+        <span class="text-2xl font-mono font-bold text-error" id="adm-stat-risk">₹3,42,800</span>
+      </div>
+    </div>
+
+    <!-- Admin Vendor Verification Queue (Requirement 23) -->
+    <div class="rounded-2xl bg-surface-container-low border border-white/5 p-6 flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-white/5">
+        <div>
+          <h3 class="text-base font-bold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+            <span>Admin Vendor Verification Queue (Verified by InvoiceGuard)</span>
+          </h3>
+          <p class="text-xs text-on-surface-variant">Review vendor GSTIN format, bank credentials, and grant the official verification badge.</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="admin-vendor-verify-grid">
+        <!-- Rendered via app.js -->
+      </div>
+    </div>
+
+    <!-- Cross-Tenant Invoices Ledger -->
+    <div class="rounded-2xl bg-surface-container-low border border-white/5 p-6 flex flex-col gap-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+        <div>
+          <h3 class="text-lg font-bold text-on-surface">Global Enterprise Invoices Ledger</h3>
+          <p class="text-xs text-on-surface-variant">Live cross-tenant invoice stream with tenant user attribution.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <input id="admin-ledger-search" type="text" placeholder="Filter global ledger..." class="bg-surface-container text-xs px-3 py-1.5 rounded-lg border border-white/5 text-on-surface placeholder:text-outline w-48" oninput="filterAdminLedger(this.value)">
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="bg-surface-container font-mono text-outline uppercase tracking-wider">
+              <th class="py-3 px-4">Invoice #</th>
+              <th class="py-3 px-4">Tenant Owner</th>
+              <th class="py-3 px-4">Vendor</th>
+              <th class="py-3 px-4 text-right">Amount</th>
+              <th class="py-3 px-4">Threat Score</th>
+              <th class="py-3 px-4">Status</th>
+            </tr>
+          </thead>
+          <tbody id="admin-invoices-tbody" class="divide-y divide-white/5 font-mono">
+            <!-- Dynamically populated via app.js -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Global Vendor Blacklist Control -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="rounded-2xl bg-surface-container-low border border-white/5 p-6 flex flex-col gap-4">
+        <div class="flex items-center justify-between pb-3 border-b border-white/5">
+          <h3 class="text-base font-bold text-on-surface">Global Blacklisted Vendors</h3>
+          <span class="text-xs font-mono text-error font-bold" id="adm-blacklist-count">1 Blacklisted</span>
+        </div>
+        <div class="flex flex-col gap-2.5" id="admin-blacklist-items">
+          <!-- Populated via app.js -->
+        </div>
+      </div>
+
+      <!-- Add to Blacklist Form -->
+      <div class="rounded-2xl bg-surface-container-low border border-white/5 p-6 flex flex-col justify-between">
+        <div class="flex flex-col gap-3 text-xs">
+          <h3 class="text-base font-bold text-on-surface pb-3 border-b border-white/5">Flag Vendor to Blacklist</h3>
+          <div>
+            <label class="text-on-surface-variant font-medium">Vendor Legal Name</label>
+            <input id="adm-blk-vendor" placeholder="e.g. Rogue Suppliers Corp" class="w-full mt-1 bg-surface-container p-2 rounded-lg text-on-surface border border-white/5">
+          </div>
+          <div>
+            <label class="text-on-surface-variant font-medium">GSTIN Tax Registration</label>
+            <input id="adm-blk-gstin" placeholder="29AAAAA0000A1Z5" class="w-full mt-1 bg-surface-container p-2 rounded-lg text-on-surface border border-white/5 font-mono">
+          </div>
+          <div>
+            <label class="text-on-surface-variant font-medium">Flag Reason &amp; Intelligence Source</label>
+            <input id="adm-blk-reason" placeholder="e.g. Offshore routing AML divergence" class="w-full mt-1 bg-surface-container p-2 rounded-lg text-on-surface border border-white/5">
+          </div>
+        </div>
+        <button onclick="submitAdminBlacklist()" class="mt-4 w-full py-2 rounded-xl bg-error text-on-error font-bold text-xs hover:opacity-90 transition-opacity">
+          Broadcast Global Blacklist Sentinel
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= PROTOTYPE ADMIN LOGIN MODAL ================= -->
+  <div id="admin-login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4" onclick="if(event.target === this) closeAdminLoginModal()">
+    <div class="bg-surface-container-low border border-error/30 rounded-3xl p-8 max-w-md w-full shadow-2xl flex flex-col gap-5">
+      <div class="flex items-center justify-between pb-3 border-b border-white/5">
+        <div class="flex items-center gap-2.5 text-error">
+          <span class="material-symbols-outlined text-[24px]">shield_person</span>
+          <h3 class="text-lg font-bold text-on-surface">Admin Sentinel Login</h3>
+        </div>
+        <button onclick="closeAdminLoginModal()" class="text-on-surface-variant hover:text-on-surface">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <div class="p-3 bg-surface-container rounded-xl text-xs text-on-surface-variant font-mono border border-white/5">
+        <span class="text-primary font-bold block mb-1">Prototype Admin Credentials:</span>
+        <div>Username: <span class="text-on-surface font-semibold">admin</span></div>
+        <div>Password: <span class="text-on-surface font-semibold">admins</span></div>
+      </div>
+
+      <form onsubmit="handleAdminLoginSubmit(event)" class="flex flex-col gap-3 text-xs">
+        <div>
+          <label class="text-on-surface-variant font-medium">Username / Admin ID</label>
+          <input id="admin-login-user" type="text" value="admin" required class="w-full mt-1 bg-surface-container p-2.5 rounded-xl text-on-surface border border-white/5 font-mono focus:outline-none focus:border-primary">
+        </div>
+        <div>
+          <label class="text-on-surface-variant font-medium">Password</label>
+          <input id="admin-login-pass" type="password" value="admins" required class="w-full mt-1 bg-surface-container p-2.5 rounded-xl text-on-surface border border-white/5 font-mono focus:outline-none focus:border-primary">
+        </div>
+        <div id="admin-login-err" class="text-error font-mono text-[11px] hidden"></div>
+        <button type="submit" class="mt-2 w-full py-2.5 rounded-xl bg-error text-on-error font-bold text-xs hover:opacity-90 transition-opacity">
+          Authenticate as Administrator
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= DEMO PERSONA SWITCHER MODAL ================= -->
+  <div id="demo-user-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden p-4" onclick="if(event.target === this) closeDemoUserModal()">
+    <div class="bg-surface-container-low border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[20px]">account_circle</span>
+          <h3 class="text-base font-bold text-on-surface">Switch User Account</h3>
+        </div>
+        <button onclick="closeDemoUserModal()" class="text-on-surface-variant hover:text-on-surface">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <p class="text-xs text-on-surface-variant">Each account has fully isolated Firestore data and private storage:</p>
+      
+      <div class="flex flex-col gap-2" id="demo-users-modal-list">
+        <!-- Rendered via app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FLAG COMPLIANCE DISPUTE MODAL ================= -->
+  <div id="flag-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden p-4" onclick="if(event.target === this) closeFlagModal()">
+    <div class="bg-surface-container-low border border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-error">
+          <span class="material-symbols-outlined text-[20px]">flag</span>
+          <h3 class="text-base font-bold text-on-surface">Flag Compliance Dispute</h3>
+        </div>
+        <button onclick="closeFlagModal()" class="text-on-surface-variant hover:text-on-surface">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      
+      <div class="flex flex-col gap-3 text-xs">
+        <div>
+          <label class="text-on-surface-variant font-medium">Invoice Reference</label>
+          <input id="flag-modal-inv" class="w-full mt-1 bg-surface-container p-2 rounded-lg text-on-surface border border-white/5 font-mono" readonly>
+        </div>
+        <div>
+          <label class="text-on-surface-variant font-medium">Report Reason (Required)</label>
+          <select id="flag-modal-category" class="w-full mt-1 bg-surface-container p-2 rounded-lg text-on-surface border border-white/5 font-mono">
+            <option value="Incorrect invoice">Incorrect invoice (Wrong details/data)</option>
+            <option value="Incorrect amount">Incorrect amount (Price/tax discrepancy)</option>
+            <option value="Duplicate invoice">Duplicate invoice (Potential double billing)</option>
+            <option value="Suspicious activity">Suspicious activity (New bank account/spoofing)</option>
+            <option value="Other">Other compliance issue</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-on-surface-variant font-medium">Severity Level</label>
+          <select id="flag-modal-severity" class="w-full mt-1 bg-surface-container p-2 rounded-lg text-on-surface border border-white/5 font-mono">
+            <option value="CRITICAL">CRITICAL (Halt Escrow Payout)</option>
+            <option value="HIGH">HIGH (Manual Signoff Required)</option>
+            <option value="MEDIUM">MEDIUM (Document Clarification)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-on-surface-variant font-medium">Vendor Rating / Trust Feedback</label>
+          <select id="flag-modal-rating" class="w-full mt-1 bg-surface-container p-2 rounded-lg text-on-surface border border-white/5 font-mono">
+            <option value="1">⭐ 1 Star (Severe Issues / Unreliable)</option>
+            <option value="2">⭐⭐ 2 Stars (Recurring Discrepancies)</option>
+            <option value="3" selected>⭐⭐⭐ 3 Stars (Average / Minor Clarification)</option>
+            <option value="4">⭐⭐⭐⭐ 4 Stars (Good / One-off Fix)</option>
+            <option value="5">⭐⭐⭐⭐⭐ 5 Stars (Trusted)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-on-surface-variant font-medium">Detailed Auditor Feedback &amp; Notes</label>
+          <textarea id="flag-modal-notes" rows="3" class="w-full mt-1 bg-surface-container p-2 rounded-lg text-on-surface border border-white/5" placeholder="Document specific anomalies or context for future verification..."></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-white/5">
+        <button onclick="closeFlagModal()" class="px-3.5 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface text-xs">Cancel</button>
+        <button onclick="submitComplianceDispute()" class="px-4 py-1.5 rounded-lg bg-error text-on-error font-semibold text-xs hover:opacity-90">Log Dispute</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-surface-container-high text-on-surface px-4 py-2.5 rounded-xl shadow-2xl border border-white/10 text-xs flex items-center gap-2 pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4">
+    <span class="material-symbols-outlined text-secondary text-[16px]">info</span>
+    <span id="toast-msg">Message</span>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
