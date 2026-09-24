@@ -11,6 +11,9 @@ Comprehensive Verification Script for InvoiceGuard:
 import requests
 import json
 import os
+import tempfile
+
+STORAGE_BASE = os.getenv("STORAGE_BASE", os.path.join(tempfile.gettempdir(), "invoiceguard"))
 
 BASE_URL = "http://127.0.0.1:8000"
 
@@ -72,7 +75,7 @@ def run_tests():
     print("[PASS] GET /api/user/metrics (Fresh User Arjun) -> HTTP 200 (is_empty: True, 0 fake stats)")
 
     # 7. Test User-Scoped File Upload & Storage Partitioning
-    sample_pdf_path = os.path.join("storage", "users", "usr_demo1_alex", "invoices", "INV-2026-0918", "original.pdf")
+    sample_pdf_path = os.path.join(STORAGE_BASE, "users", "usr_demo1_alex", "invoices", "INV-2026-0918", "original.pdf")
     with open(sample_pdf_path, "rb") as f:
         file_bytes = f.read()
 
@@ -88,7 +91,7 @@ def run_tests():
     print(f"[PASS] POST /api/user/invoices/upload -> HTTP 200 (Ingested invoice {new_id} for Arjun)")
 
     # Verify storage file exists in isolated path
-    expected_storage_file = os.path.join("storage", "users", "usr_demo5_arjun", "invoices", new_id, "original.pdf")
+    expected_storage_file = os.path.join(STORAGE_BASE, "users", "usr_demo5_arjun", "invoices", new_id, "original.pdf")
     assert os.path.exists(expected_storage_file)
     print(f"[PASS] Verified file stored in isolated path: {expected_storage_file}")
 

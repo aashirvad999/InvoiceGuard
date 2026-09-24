@@ -6,6 +6,7 @@ Document AI Structured Extraction, Vendor Verification & Feedback.
 
 import os
 import sys
+import tempfile
 
 API_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(API_DIR)
@@ -68,7 +69,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-STORAGE_BASE = os.path.abspath(os.path.join(ROOT_DIR, "storage"))
+STORAGE_BASE = os.getenv("STORAGE_BASE", os.path.join(tempfile.gettempdir(), "invoiceguard"))
 os.makedirs(STORAGE_BASE, exist_ok=True)
 
 for uid, invs in [("usr_demo1_alex", get_user_invoices("usr_demo1_alex")), ("usr_demo2_priya", get_user_invoices("usr_demo2_priya"))]:
@@ -425,7 +426,7 @@ async def upload_invoice_to_user_store(
         "bank_name": temp_inv["bank_name"],
         "bank_account": temp_inv["bank_account"],
         "ifsc": temp_inv["ifsc"],
-        "file_url": f"/storage/users/{user['uid']}/invoices/{new_inv_id}/original.pdf",
+        "file_url": f"/tmp/invoiceguard/users/{user['uid']}/invoices/{new_inv_id}/original.pdf",
         "historical_variance_pct": "+42.5%" if risk["score"] > 50 else "+0.0%",
         "threat_score": risk["score"],
         "risk_level": risk["risk_level"],
