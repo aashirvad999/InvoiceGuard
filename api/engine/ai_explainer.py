@@ -44,14 +44,14 @@ load_local_env()
 
 try:
     from google import genai
-    from google.genai import types
+    from google.genai import types, errors
     GENAI_AVAILABLE = True
 except ImportError as e:
     GENAI_AVAILABLE = False
     logger.error("google-genai import failed: %s: %s", type(e).__name__, str(e))
 
 FALLBACK_EXPLANATION = "AI explanation temporarily unavailable. Deterministic analysis is still available."
-GEMINI_MODEL = "gemini-3.6-flash"
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 SYSTEM_INSTRUCTION = (
     "You are the explanation layer of InvoiceGuard. "
@@ -76,8 +76,8 @@ CHAT_SYSTEM_INSTRUCTION = (
 )
 
 
-def get_gemini_client():
-    """Returns Gemini client if API key is present."""
+def get_gemini_client() -> Optional[Any]:
+    """Returns Gemini client if GEMINI_API_KEY is present in environment."""
     load_local_env()
     if not GENAI_AVAILABLE:
         logger.warning("[DIAGNOSTIC] google-genai SDK present: NO")
@@ -90,9 +90,67 @@ def get_gemini_client():
     logger.info("[DIAGNOSTIC] GEMINI_API_KEY present: YES (Key length: %d chars)", len(api_key.strip()))
     try:
         return genai.Client(api_key=api_key.strip())
+    except ValueError as e:
+        logger.error("[DIAGNOSTIC] Client initialization FAILED (ValueError): %s", str(e))
+        return None
     except Exception as e:
         logger.error("[DIAGNOSTIC] Client initialization FAILED. Exception [%s]: %s", type(e).__name__, str(e))
         return None
+
+
+def check_gemini_health() -> Dict[str, Any]:
+    """
+    Minimal backend diagnostic check for Gemini API.
+    Verifies key configuration and connectivity using minimal tokens.
+    Never exposes the API key.
+    """
+    load_local_env()
+    if not GENAI_AVAILABLE:
+        return {
+            "status": "error",
+            "gemini": "not_configured"
+        }
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key or not api_key.strip():
+        return {
+            "status": "error",
+            "gemini": "not_configured"
+        }
+
+    client = get_gemini_client()
+    if not client:
+        return {
+            "status": "error",
+            "gemini": "not_configured"
+        }
+
+    try:
+        config = types.GenerateContentConfig(
+            max_output_tokens=10,
+            temperature=0.0
+        )
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents="Reply with exactly: GEMINI_OK",
+            config=config
+        )
+        if response and response.text and response.text.strip():
+            return {
+                "status": "ok",
+                "gemini": "connected"
+            }
+        else:
+            return {
+                "status": "error",
+                "gemini": "error"
+            }
+    except Exception as e:
+        logger.error("[DIAGNOSTIC] Gemini health check Exception [%s]: %s", type(e).__name__, str(e))
+        return {
+            "status": "error",
+            "gemini": "error"
+        }
 
 
 def generate_invoice_explanation(invoice_data: Dict[str, Any], risk_data: Optional[Dict[str, Any]] = None) -> str:
@@ -115,7 +173,17 @@ def generate_invoice_explanation(invoice_data: Dict[str, Any], risk_data: Option
     if not risk_level:
         risk_level = risk_data.get("risk_level") if risk_data else "SAFE"
 
-    signals = invoice_data.get("signals", [])
+    raw_signals = invoice_data.get("signals", [])
+    signals = []
+    for s in raw_signals:
+        if isinstance(s, dict):
+            signals.append({
+                "type": s.get("type"),
+                "title": s.get("title"),
+                "description": s.get("description"),
+                "severity": s.get("severity")
+            })
+
     financial_breakdown = invoice_data.get("financial_breakdown", {})
 
     structured_analysis = {
@@ -171,11 +239,36 @@ def chat_with_invoiceguard(
     client = get_gemini_client()
     invoice_context = invoice_context or {}
 
+    # Extract concise subset of context for Gemini prompt
+    concise_context = {}
+    if invoice_context:
+        concise_context = {
+            "invoice_number": invoice_context.get("invoice_number"),
+            "vendor_name": invoice_context.get("vendor_name") or invoice_context.get("vendor"),
+            "total_amount": invoice_context.get("total_amount"),
+            "taxable_amount": invoice_context.get("taxable_amount"),
+            "risk_score": invoice_context.get("risk_score", invoice_context.get("threat_score")),
+            "risk_level": invoice_context.get("risk_level"),
+            "gstin": invoice_context.get("gstin"),
+            "bank_name": invoice_context.get("bank_name"),
+            "bank_account": invoice_context.get("bank_account"),
+            "financial_breakdown": invoice_context.get("financial_breakdown")
+        }
+        raw_sigs = invoice_context.get("signals", [])
+        concise_context["signals"] = [
+            {
+                "title": s.get("title"),
+                "description": s.get("description"),
+                "severity": s.get("severity")
+            }
+            for s in raw_sigs if isinstance(s, dict)
+        ]
+
     if client:
         logger.info("[DIAGNOSTIC] Gemini model being used: '%s'", GEMINI_MODEL)
         logger.info("[DIAGNOSTIC] Gemini chat request started.")
         try:
-            context_str = json.dumps(invoice_context, indent=2, default=str) if invoice_context else "No active invoice selected."
+            context_str = json.dumps(concise_context, indent=2, default=str) if concise_context else "No active invoice selected."
             prompt = (
                 f"Supplied Invoice Deterministic Context:\n{context_str}\n\n"
                 f"User Question: {query}"
@@ -214,12 +307,12 @@ def chat_with_invoiceguard(
                 "ai_available": False
             }
 
-    # Deterministic Contextual Fallback Response if GEMINI_API_KEY is missing
+    # Deterministic Contextual Fallback Response if GEMINI_API_KEY is missing or API call fails
     logger.info("[DIAGNOSTIC] GEMINI_API_KEY missing or invalid. Returning contextual fallback response.")
     q_lower = query.lower()
     if not invoice_context:
         reply = "AI assistant is operating in fallback mode. No invoice context is currently active."
-    elif "why" in q_lower and ("flag" in q_lower or "risk" in q_lower or "score" in q_lower):
+    elif any(k in q_lower for k in ["why", "flag", "risk", "score", "suspicious", "bank", "payout", "destination", "account"]):
         score = invoice_context.get("risk_score", invoice_context.get("threat_score", 0))
         signals = invoice_context.get("signals", [])
         if signals:
@@ -227,7 +320,7 @@ def chat_with_invoiceguard(
             reply = f"This invoice was assigned a Risk Score of {score}/100. Primary detected signals: {'; '.join(sig_descs)}."
         else:
             reply = f"This invoice passed deterministic verification with a Risk Score of {score}/100. No critical anomalies were detected."
-    elif "math" in q_lower or "calculation" in q_lower or "total" in q_lower or "difference" in q_lower:
+    elif any(k in q_lower for k in ["math", "calculation", "total", "difference", "amount"]):
         fb = invoice_context.get("financial_breakdown", {})
         if fb and fb.get("surplus_gap", 0) > 0:
             reply = f"Mathematical verification detected a discrepancy. System expected grand total is ₹{fb.get('expected_grand_total', 0):,.2f}, while the stated grand total is ₹{invoice_context.get('total_amount', 0):,.2f}, resulting in a surplus gap of ₹{fb.get('surplus_gap', 0):,.2f}."

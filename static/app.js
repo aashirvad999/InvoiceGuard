@@ -1238,7 +1238,6 @@ async function processUploadFile(file) {
     setTimeout(async () => {
       setStep(5, 'done');
       if (overlay) overlay.classList.add('hidden');
-      showToast(`Invoice #${result.invoice.invoice_number} processed! Threat Score: ${result.invoice.threat_score}/100`);
       await refreshUserData();
       selectInvoiceForSpotlight(result.invoice_id);
     }, 1400);

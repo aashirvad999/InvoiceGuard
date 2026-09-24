@@ -36,7 +36,9 @@ from engine.document_forensics import inspect_pdf_document, compute_file_sha256
 from engine.ai_explainer import (
     generate_invoice_explanation,
     chat_with_invoiceguard,
-    draft_vendor_inquiry_email
+    draft_vendor_inquiry_email,
+    check_gemini_health,
+    GEMINI_MODEL
 )
 from engine.firestore_db import (
     USER_PROFILES,
@@ -582,6 +584,16 @@ def startup_gemini_check():
     print(f"[STARTUP] FastApi process GEMINI_API_KEY present: {key_present} (Length: {key_len})")
 
 
+@app.get("/api/ai/health")
+def ai_health_endpoint(user: Dict[str, Any] = Depends(get_current_user)):
+    """
+    GET /api/ai/health
+    Backend diagnostic endpoint to verify Gemini API configuration & connectivity.
+    Protected by authentication dependency to prevent unauthenticated abuse/cost risk.
+    """
+    return check_gemini_health()
+
+
 @app.post("/api/ai/explain")
 def explain_invoice_endpoint(req: Dict[str, Any]):
     """
@@ -617,7 +629,7 @@ def handle_ai_chat(req: ChatRequest, user: Dict[str, Any] = Depends(get_current_
             "reply": f"AI Assistant Exception [{type(e).__name__}]: {e}",
             "error_detail": str(e),
             "confidence": 0.0,
-            "model": "gemini-3.6-flash",
+            "model": GEMINI_MODEL,
             "timestamp": "Just now",
             "ai_available": False
         }

@@ -9,6 +9,7 @@ import json
 import unittest
 
 # Ensure engine modules can be imported
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "api"))
 sys.path.insert(0, os.path.dirname(__file__))
 
 from engine.deterministic import (
@@ -19,6 +20,7 @@ from engine.deterministic import (
 from engine.ai_explainer import (
     generate_invoice_explanation,
     chat_with_invoiceguard,
+    check_gemini_health,
     FALLBACK_EXPLANATION
 )
 
@@ -267,6 +269,25 @@ class TestGeminiIntegration(unittest.TestCase):
             elif "GEMINI_API_KEY" in os.environ:
                 del os.environ["GEMINI_API_KEY"]
 
+    def test_6_gemini_health_check(self):
+        """TEST 6: Test check_gemini_health() when key is missing and when key is configured."""
+        orig_key = os.environ.get("GEMINI_API_KEY")
+        try:
+            # Case A: Missing key
+            if "GEMINI_API_KEY" in os.environ:
+                del os.environ["GEMINI_API_KEY"]
+            res_missing = check_gemini_health()
+            self.assertEqual(res_missing.get("status"), "error")
+            self.assertEqual(res_missing.get("gemini"), "not_configured")
+
+            print("\n--- TEST 6 OUTPUT (Missing Key) ---")
+            print("Health response:", res_missing)
+
+        finally:
+            if orig_key:
+                os.environ["GEMINI_API_KEY"] = orig_key
+
 
 if __name__ == "__main__":
     unittest.main()
+
