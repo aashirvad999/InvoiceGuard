@@ -620,6 +620,9 @@ def handle_ai_chat(req: ChatRequest, user: Dict[str, Any] = Depends(get_current_
     invoice_context = None
     if req.invoice_id:
         invoice_context = get_user_invoice_by_id(user["uid"], req.invoice_id)
+
+    # Temporary safe diagnostic logging
+    print(f"[AI-CHAT-DIAGNOSTIC] User UID: '{user.get('uid')}' | Requested invoice_id: '{req.invoice_id}' | Lookup Succeeded: {bool(invoice_context)} | invoice_context is None: {invoice_context is None}")
         
     try:
         res = chat_with_invoiceguard(
