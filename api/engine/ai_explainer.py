@@ -5,6 +5,7 @@ Uses Gemini 3.6 Flash as an EXPLANATION / AI ASSISTANT layer over deterministic 
 
 import os
 import json
+import time
 import logging
 from typing import Dict, List, Any, Optional
 
@@ -20,8 +21,14 @@ if not logger.handlers:
 
 
 def load_local_env():
-    """Helper to load .env file if present in workspace root."""
+    """Helper to load .env file using python-dotenv with fallback to manual parsing."""
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
     env_paths = [
+        os.path.join(os.path.dirname(__file__), "..", "..", ".env"),
         os.path.join(os.path.dirname(__file__), "..", ".env"),
         os.path.join(os.path.dirname(__file__), ".env"),
         ".env"
@@ -34,8 +41,9 @@ def load_local_env():
                         line = line.strip()
                         if line and not line.startswith("#") and "=" in line:
                             k, v = line.split("=", 1)
-                            os.environ[k.strip()] = v.strip().strip("'\"")
-                logger.info("Loaded environment variables from '%s'", os.path.abspath(p))
+                            key_name = k.strip()
+                            if key_name not in os.environ or not os.environ[key_name]:
+                                os.environ[key_name] = v.strip().strip("'\"")
                 break
             except Exception as e:
                 logger.warning("Failed reading .env from '%s': %s", p, str(e))
@@ -51,7 +59,7 @@ except ImportError as e:
     logger.error("google-genai import failed: %s: %s", type(e).__name__, str(e))
 
 FALLBACK_EXPLANATION = "AI explanation temporarily unavailable. Deterministic analysis is still available."
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 
 SYSTEM_INSTRUCTION = (
     "You are the explanation layer of InvoiceGuard. "
@@ -77,17 +85,17 @@ CHAT_SYSTEM_INSTRUCTION = (
 
 
 def get_gemini_client() -> Optional[Any]:
-    """Returns Gemini client if GEMINI_API_KEY is present in environment."""
+    """Returns Gemini client if a valid GEMINI_API_KEY is configured in environment."""
     load_local_env()
     if not GENAI_AVAILABLE:
         logger.warning("[DIAGNOSTIC] google-genai SDK present: NO")
         return None
     api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key or not api_key.strip():
-        logger.warning("[DIAGNOSTIC] GEMINI_API_KEY present: NO")
+    if not api_key or not api_key.strip() or api_key.strip() == "YOUR_ACTUAL_GEMINI_API_KEY":
+        logger.warning("[DIAGNOSTIC] GEMINI_API_KEY configured: False")
         return None
 
-    logger.info("[DIAGNOSTIC] GEMINI_API_KEY present: YES (Key length: %d chars)", len(api_key.strip()))
+    logger.info("[DIAGNOSTIC] GEMINI_API_KEY configured: True (Length: %d chars)", len(api_key.strip()))
     try:
         return genai.Client(api_key=api_key.strip())
     except ValueError as e:
@@ -98,13 +106,58 @@ def get_gemini_client() -> Optional[Any]:
         return None
 
 
+def is_transient_error(e: Exception) -> bool:
+    """Checks if an exception represents a transient API error (503, 429, 500, 504, high demand)."""
+    code = getattr(e, 'code', None) or getattr(e, 'status_code', None)
+    if code in (503, 429, 500, 504):
+        return True
+    err_str = str(e).lower()
+    transient_keywords = [
+        "503", "429", "unavailable", "high demand", "resource_exhausted",
+        "rate limit", "temporarily busy", "service unavailable", "overloaded"
+    ]
+    return any(k in err_str for k in transient_keywords)
+
+
+def call_gemini_with_retry(
+    client: Any,
+    model: str,
+    contents: Any,
+    config: Any,
+    max_retries: int = 2,
+    initial_delay: float = 1.0
+) -> Any:
+    """
+    Executes client.models.generate_content with retries for transient 503/UNAVAILABLE errors.
+    Uses short exponential backoff (e.g. 1s, 2s).
+    Will not create infinite loops and stops immediately for non-transient errors.
+    """
+    delay = initial_delay
+    for attempt in range(max_retries + 1):
+        try:
+            return client.models.generate_content(
+                model=model,
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            if is_transient_error(e) and attempt < max_retries:
+                logger.warning(
+                    "[AI-RETRY] Transient Gemini error on attempt %d/%d [%s]: %s. Retrying in %.1fs...",
+                    attempt + 1, max_retries + 1, type(e).__name__, str(e)[:100], delay
+                )
+                time.sleep(delay)
+                delay *= 2.0
+            else:
+                raise e
+
+
 def check_gemini_health() -> Dict[str, Any]:
     """
     Minimal backend diagnostic check for Gemini API.
     Verifies key configuration and connectivity using minimal tokens.
     Never exposes the API key.
     """
-    load_local_env()
     if not GENAI_AVAILABLE:
         return {
             "status": "error",
@@ -112,7 +165,7 @@ def check_gemini_health() -> Dict[str, Any]:
         }
 
     api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key or not api_key.strip():
+    if not api_key or not api_key.strip() or api_key.strip() == "YOUR_ACTUAL_GEMINI_API_KEY":
         return {
             "status": "error",
             "gemini": "not_configured"
@@ -130,10 +183,13 @@ def check_gemini_health() -> Dict[str, Any]:
             max_output_tokens=10,
             temperature=0.0
         )
-        response = client.models.generate_content(
+        response = call_gemini_with_retry(
+            client=client,
             model=GEMINI_MODEL,
             contents="Reply with exactly: GEMINI_OK",
-            config=config
+            config=config,
+            max_retries=1,
+            initial_delay=1.0
         )
         if response and response.text and response.text.strip():
             return {
@@ -211,10 +267,13 @@ def generate_invoice_explanation(invoice_data: Dict[str, Any], risk_data: Option
             temperature=0.2,
             automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)
         )
-        response = client.models.generate_content(
+        response = call_gemini_with_retry(
+            client=client,
             model=GEMINI_MODEL,
             contents=prompt,
-            config=config
+            config=config,
+            max_retries=2,
+            initial_delay=1.0
         )
         if response and response.text and response.text.strip():
             logger.info("[DIAGNOSTIC] Gemini explanation request SUCCEEDED (%d chars).", len(response.text.strip()))
@@ -279,10 +338,13 @@ def chat_with_invoiceguard(
                 temperature=0.2,
                 automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)
             )
-            response = client.models.generate_content(
+            response = call_gemini_with_retry(
+                client=client,
                 model=GEMINI_MODEL,
                 contents=prompt,
-                config=config
+                config=config,
+                max_retries=2,
+                initial_delay=1.0
             )
             if response and response.text and response.text.strip():
                 logger.info("[DIAGNOSTIC] Gemini chat request SUCCEEDED (%d chars).", len(response.text.strip()))
@@ -296,11 +358,14 @@ def chat_with_invoiceguard(
             else:
                 logger.warning("[DIAGNOSTIC] Gemini chat request returned empty text.")
         except Exception as e:
-            err_msg = f"Gemini API Error [{type(e).__name__}]: {str(e)}"
             logger.error("[DIAGNOSTIC] Gemini chat request FAILED. Exception [%s]: %s", type(e).__name__, str(e))
+            if is_transient_error(e):
+                reply_text = "Gemini is temporarily busy due to high demand. Please try again in a moment."
+            else:
+                reply_text = "AI explanation temporarily unavailable. Please try again shortly."
+
             return {
-                "reply": f"AI Assistant Exception: {err_msg}",
-                "error_detail": err_msg,
+                "reply": reply_text,
                 "confidence": 0.0,
                 "model": GEMINI_MODEL,
                 "timestamp": "Just now",

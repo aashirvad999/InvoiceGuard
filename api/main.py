@@ -577,11 +577,16 @@ def blacklist_vendor_endpoint(
 
 
 # --- Gemini AI ---
+def is_gemini_configured() -> bool:
+    k = os.getenv("GEMINI_API_KEY", "")
+    return bool(k and k.strip() and k.strip() != "YOUR_ACTUAL_GEMINI_API_KEY")
+
+
 @app.on_event("startup")
 def startup_gemini_check():
-    key_present = bool(os.getenv("GEMINI_API_KEY"))
-    key_len = len(os.getenv("GEMINI_API_KEY", ""))
-    print(f"[STARTUP] FastApi process GEMINI_API_KEY present: {key_present} (Length: {key_len})")
+    configured = is_gemini_configured()
+    key_len = len(os.getenv("GEMINI_API_KEY", "")) if configured else 0
+    print(f"[STARTUP] FastApi process GEMINI_API_KEY configured: {configured} (Length: {key_len})")
 
 
 @app.get("/api/ai/health")
@@ -609,8 +614,8 @@ def explain_invoice_endpoint(req: Dict[str, Any]):
 
 @app.post("/api/ai/chat")
 def handle_ai_chat(req: ChatRequest, user: Dict[str, Any] = Depends(get_current_user)):
-    key_present = bool(os.getenv("GEMINI_API_KEY"))
-    print(f"[API /api/ai/chat] Chat request received. GEMINI_API_KEY present: {key_present}")
+    configured = is_gemini_configured()
+    print(f"[API /api/ai/chat] Chat request received. GEMINI_API_KEY configured: {configured}")
     
     invoice_context = None
     if req.invoice_id:
@@ -625,9 +630,13 @@ def handle_ai_chat(req: ChatRequest, user: Dict[str, Any] = Depends(get_current_
         return res
     except Exception as e:
         print(f"[API /api/ai/chat] Exception caught [{type(e).__name__}]: {e}")
+        err_str = str(e).lower()
+        if "503" in err_str or "unavailable" in err_str or "high demand" in err_str:
+            reply_text = "Gemini is temporarily busy due to high demand. Please try again in a moment."
+        else:
+            reply_text = "AI explanation temporarily unavailable. Please try again shortly."
         return {
-            "reply": f"AI Assistant Exception [{type(e).__name__}]: {e}",
-            "error_detail": str(e),
+            "reply": reply_text,
             "confidence": 0.0,
             "model": GEMINI_MODEL,
             "timestamp": "Just now",

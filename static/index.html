@@ -830,9 +830,18 @@
     <!-- ================= SECTION 6: ASK INVOICEGUARD (AI ASSISTANT WORKBENCH) ================= -->
     <section id="assistant" class="scroll-mt-20 flex flex-col gap-6 mb-12">
       <div class="flex flex-col gap-1 pb-3 border-b border-white/5">
-        <div class="flex items-center gap-2 text-primary font-mono text-xs font-semibold">
-          <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
-          <span>GEMINI 2.5 INTEGRATED COPILOT</span>
+        <div class="flex items-center gap-2.5 mb-1">
+          <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="gemini-star-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#4285F4" />
+                <stop offset="40%" stop-color="#9B72CB" />
+                <stop offset="80%" stop-color="#D9657B" />
+              </linearGradient>
+            </defs>
+            <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" fill="url(#gemini-star-grad)"/>
+          </svg>
+          <span class="font-bold text-lg tracking-wider uppercase bg-gradient-to-r from-[#4285F4] via-[#9B72CB] to-[#D9657B] bg-clip-text text-transparent">GEMINI</span>
         </div>
         <h2 class="text-xl font-bold tracking-tight text-on-surface">Ask InvoiceGuard</h2>
         <p class="text-xs text-on-surface-variant">Have questions about an invoice? Ask InvoiceGuard to explain what it found.</p>
@@ -899,7 +908,7 @@
               </div>
               <div class="flex justify-between text-on-surface-variant">
                 <span>Model Engine:</span>
-                <span class="text-primary">Gemini 2.5 Flash</span>
+                <span class="text-primary font-semibold">Gemini 3.6 Flash</span>
               </div>
             </div>
           </div>

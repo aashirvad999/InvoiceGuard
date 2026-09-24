@@ -770,7 +770,7 @@ function renderSpotlightInvoice(invoiceId) {
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2 text-primary font-mono text-xs font-bold uppercase tracking-wider">
               <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
-              <span>AI Explanation (Gemini 2.5 Flash)</span>
+              <span>AI Explanation (Gemini 3.6 Flash)</span>
             </div>
             <span class="text-[10px] font-mono text-secondary bg-secondary/10 px-2 py-0.5 rounded border border-secondary/20">Verified Non-Hallucinating</span>
           </div>
