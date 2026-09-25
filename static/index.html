@@ -751,104 +751,8 @@
 
       </div>
 
-    </section>
-
-    <!-- ================= SECTION 3: RECENT INVOICES & RISK OVERVIEW ================= -->
-    <section id="invoices" class="scroll-mt-20 flex flex-col gap-6">
-      
-      <!-- Section Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-white/5">
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-on-surface">Recent Invoices</h2>
-          <p class="text-xs text-on-surface-variant">Filterable ledger of incoming invoices and verification signals.</p>
-        </div>
-
-        <!-- Filter Tabs & Quick Search -->
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="flex items-center gap-1 bg-surface-container p-1 rounded-lg border border-white/5 text-xs font-medium">
-            <button onclick="filterInvoicesBy('all')" class="inv-filter-btn active px-2.5 py-1 rounded bg-surface-container-high text-on-surface" data-f="all">All</button>
-            <button onclick="filterInvoicesBy('review')" class="inv-filter-btn px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface" data-f="review">
-              <span>Needs Review</span>
-              <span class="ml-1 text-tertiary font-mono text-[10px] bg-tertiary/10 px-1 py-0.2 rounded" id="cnt-rev">3</span>
-            </button>
-            <button onclick="filterInvoicesBy('passed')" class="inv-filter-btn px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface" data-f="passed">
-              <span>Passed</span>
-              <span class="ml-1 text-secondary font-mono text-[10px] bg-secondary/10 px-1 py-0.2 rounded" id="cnt-pass">138</span>
-            </button>
-            <button onclick="filterInvoicesBy('critical')" class="inv-filter-btn px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface" data-f="critical">
-              <span>Critical</span>
-              <span class="ml-1 text-error font-mono text-[10px] bg-error/10 px-1 py-0.2 rounded" id="cnt-crit">1</span>
-            </button>
-          </div>
-
-          <div class="flex items-center gap-1 bg-surface-container px-2.5 py-1.5 rounded-lg border border-white/5 text-xs">
-            <span class="material-symbols-outlined text-[15px] text-outline">search</span>
-            <input id="invoices-filter-input" type="text" placeholder="Search vendor or ID..." class="bg-transparent border-none outline-none text-on-surface placeholder:text-outline w-32 sm:w-44 text-xs" oninput="filterInvoicesSearch(this.value)">
-          </div>
-        </div>
-      </div>
-
-      <!-- Invoices Table Container -->
-      <div class="rounded-2xl bg-surface-container-low border border-white/5 overflow-hidden shadow-sm">
-        <div class="w-full overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead>
-              <tr class="bg-surface-container font-mono text-outline uppercase tracking-wider border-b border-white/5">
-                <th class="py-3 px-4 font-semibold">Invoice</th>
-                <th class="py-3 px-4 font-semibold">Vendor</th>
-                <th class="py-3 px-4 font-semibold">Date</th>
-                <th class="py-3 px-4 font-semibold text-right">Amount</th>
-                <th class="py-3 px-4 font-semibold">Risk Assessment</th>
-                <th class="py-3 px-4 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody id="invoices-table-body" class="divide-y divide-white/5">
-              <!-- Dynamically populated via app.js -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ================= SECTION 4: VENDORS REGISTRY ================= -->
-    <section id="vendors" class="scroll-mt-20 flex flex-col gap-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-on-surface">Vendors</h2>
-          <p class="text-xs text-on-surface-variant">Trusted vendor registry, payment accounts on file, and trust index ratings.</p>
-        </div>
-        <button onclick="showToast('Vendor KYC Registration workflow active.')" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-medium text-on-surface flex items-center gap-1.5 self-start">
-          <span class="material-symbols-outlined text-[15px]">add</span>
-          <span>Register Vendor KYC</span>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="vendors-cards-grid">
-        <!-- Populated via app.js -->
-      </div>
-    </section>
-
-    <!-- ================= SECTION 5: VENDOR FEEDBACK & COMPLAINTS ================= -->
-    <section id="feedback" class="scroll-mt-20 flex flex-col gap-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-on-surface">Vendor Feedback &amp; Compliance</h2>
-          <p class="text-xs text-on-surface-variant">Recorded payment routing discrepancies, suspicious wire changes, and compliance flags.</p>
-        </div>
-        <button onclick="openFlagModalForActive()" class="px-3.5 py-1.5 rounded-lg bg-error/10 hover:bg-error/20 border border-error/30 text-error text-xs font-semibold flex items-center gap-1.5 self-start">
-          <span class="material-symbols-outlined text-[15px]">add_alert</span>
-          <span>Report a Vendor</span>
-        </button>
-      </div>
-
-      <div class="flex flex-col gap-3" id="feedback-complaints-list">
-        <!-- Populated via app.js -->
-      </div>
-    </section>
-
-    <!-- ================= SECTION 6: ASK INVOICEGUARD (AI ASSISTANT WORKBENCH) ================= -->
-    <section id="assistant" class="scroll-mt-20 flex flex-col gap-6 mb-12">
+    <!-- ================= SECTION: ASK INVOICEGUARD (AI ASSISTANT WORKBENCH) ================= -->
+    <section id="assistant" class="scroll-mt-20 flex flex-col gap-6">
       <div class="flex flex-col gap-1 pb-3 border-b border-white/5">
         <div class="flex items-center gap-2.5 mb-1">
           <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -947,6 +851,100 @@
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ================= SECTION 3: RECENT INVOICES & RISK OVERVIEW ================= -->
+    <section id="invoices" class="scroll-mt-20 flex flex-col gap-6">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-white/5">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-on-surface">Recent Invoices</h2>
+          <p class="text-xs text-on-surface-variant">Filterable ledger of incoming invoices and verification signals.</p>
+        </div>
+
+        <!-- Filter Tabs & Quick Search -->
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-1 bg-surface-container p-1 rounded-lg border border-white/5 text-xs font-medium">
+            <button onclick="filterInvoicesBy('all')" class="inv-filter-btn active px-2.5 py-1 rounded bg-surface-container-high text-on-surface" data-f="all">All</button>
+            <button onclick="filterInvoicesBy('review')" class="inv-filter-btn px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface" data-f="review">
+              <span>Needs Review</span>
+              <span class="ml-1 text-tertiary font-mono text-[10px] bg-tertiary/10 px-1 py-0.2 rounded" id="cnt-rev">3</span>
+            </button>
+            <button onclick="filterInvoicesBy('passed')" class="inv-filter-btn px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface" data-f="passed">
+              <span>Passed</span>
+              <span class="ml-1 text-secondary font-mono text-[10px] bg-secondary/10 px-1 py-0.2 rounded" id="cnt-pass">138</span>
+            </button>
+            <button onclick="filterInvoicesBy('critical')" class="inv-filter-btn px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface" data-f="critical">
+              <span>Critical</span>
+              <span class="ml-1 text-error font-mono text-[10px] bg-error/10 px-1 py-0.2 rounded" id="cnt-crit">1</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-1 bg-surface-container px-2.5 py-1.5 rounded-lg border border-white/5 text-xs">
+            <span class="material-symbols-outlined text-[15px] text-outline">search</span>
+            <input id="invoices-filter-input" type="text" placeholder="Search vendor or ID..." class="bg-transparent border-none outline-none text-on-surface placeholder:text-outline w-32 sm:w-44 text-xs" oninput="filterInvoicesSearch(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoices Table Container -->
+      <div class="rounded-2xl bg-surface-container-low border border-white/5 overflow-hidden shadow-sm">
+        <div class="w-full overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-surface-container font-mono text-outline uppercase tracking-wider border-b border-white/5">
+                <th class="py-3 px-4 font-semibold">Invoice</th>
+                <th class="py-3 px-4 font-semibold">Vendor</th>
+                <th class="py-3 px-4 font-semibold">Date</th>
+                <th class="py-3 px-4 font-semibold text-right">Amount</th>
+                <th class="py-3 px-4 font-semibold">Risk Assessment</th>
+                <th class="py-3 px-4 font-semibold text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="invoices-table-body" class="divide-y divide-white/5">
+              <!-- Dynamically populated via app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= SECTION 4: VENDORS REGISTRY ================= -->
+    <section id="vendors" class="scroll-mt-20 flex flex-col gap-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-on-surface">Vendors</h2>
+          <p class="text-xs text-on-surface-variant">Trusted vendor registry, payment accounts on file, and trust index ratings.</p>
+        </div>
+        <button onclick="showToast('Vendor KYC Registration workflow active.')" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-medium text-on-surface flex items-center gap-1.5 self-start">
+          <span class="material-symbols-outlined text-[15px]">add</span>
+          <span>Register Vendor KYC</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="vendors-cards-grid">
+        <!-- Populated via app.js -->
+      </div>
+    </section>
+
+    <!-- ================= SECTION 5: VENDOR FEEDBACK & COMPLAINTS ================= -->
+    <section id="feedback" class="scroll-mt-20 flex flex-col gap-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-on-surface">Vendor Feedback &amp; Compliance</h2>
+          <p class="text-xs text-on-surface-variant">Recorded payment routing discrepancies, suspicious wire changes, and compliance flags.</p>
+        </div>
+        <button onclick="openFlagModalForActive()" class="px-3.5 py-1.5 rounded-lg bg-error/10 hover:bg-error/20 border border-error/30 text-error text-xs font-semibold flex items-center gap-1.5 self-start">
+          <span class="material-symbols-outlined text-[15px]">add_alert</span>
+          <span>Report a Vendor</span>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-3" id="feedback-complaints-list">
+        <!-- Populated via app.js -->
       </div>
     </section>
 

@@ -43,7 +43,7 @@ def validate_gstin_format(gstin: Optional[str]) -> Dict[str, Any]:
             "valid": False,
             "status": "Invalid length",
             "badge": "GSTIN format ⚠ Invalid length",
-            "reason": f"GSTIN '{clean}' is {len(clean)} characters long. Genuine Indian GSTIN must be exactly 15 characters long."
+            "reason": f"GSTIN '{clean}' is {len(clean)} characters long; valid GSTIN requires 15 chars."
         }
 
     if not GSTIN_REGEX.match(clean):
@@ -232,7 +232,7 @@ def validate_mathematical_consistency(
                 "severity": "HIGH",
                 "score_impact": 25,
                 "title": "⚠ CGST calculation mismatch",
-                "description": f"Stated CGST (₹{cgst_amount:,.2f}) does not match expected CGST (₹{exp_cgst:,.2f}) calculated at {c_rate*100:.0f}% on subtotal ₹{calculated_subtotal:,.2f} (Difference: ₹{abs(cgst_diff):,.2f}).",
+                "description": f"Stated CGST (₹{cgst_amount:,.2f}) mismatches expected ₹{exp_cgst:,.2f} ({c_rate*100:.0f}% of subtotal ₹{calculated_subtotal:,.2f}). Diff: ₹{abs(cgst_diff):,.2f}.",
                 "expected_value": f"₹{exp_cgst:,.2f}",
                 "actual_value": f"₹{cgst_amount:,.2f}",
                 "evidence": {
@@ -252,7 +252,7 @@ def validate_mathematical_consistency(
                 "severity": "HIGH",
                 "score_impact": 25,
                 "title": "⚠ SGST calculation mismatch",
-                "description": f"Stated SGST (₹{sgst_amount:,.2f}) does not match expected SGST (₹{exp_sgst:,.2f}) calculated at {s_rate*100:.0f}% on subtotal ₹{calculated_subtotal:,.2f} (Difference: ₹{abs(sgst_diff):,.2f}).",
+                "description": f"Stated SGST (₹{sgst_amount:,.2f}) mismatches expected ₹{exp_sgst:,.2f} ({s_rate*100:.0f}% of subtotal ₹{calculated_subtotal:,.2f}). Diff: ₹{abs(sgst_diff):,.2f}.",
                 "expected_value": f"₹{exp_sgst:,.2f}",
                 "actual_value": f"₹{sgst_amount:,.2f}",
                 "evidence": {
@@ -276,7 +276,7 @@ def validate_mathematical_consistency(
             "severity": "CRITICAL",
             "score_impact": 40,
             "title": "🔴 Grand total mismatch",
-            "description": f"Invoice printed grand total ₹{total_amount:,.2f} does not match independently calculated total ₹{expected_grand_total:,.2f} (Calculated subtotal ₹{calculated_subtotal:,.2f} + Taxes ₹{expected_tax:,.2f}). Difference: ₹{abs(grand_total_diff):,.2f}.",
+            "description": f"Grand total ₹{total_amount:,.2f} mismatches calculated ₹{expected_grand_total:,.2f} (Subtotal ₹{calculated_subtotal:,.2f} + Taxes ₹{expected_tax:,.2f}). Diff: ₹{abs(grand_total_diff):,.2f}.",
             "expected_value": f"₹{expected_grand_total:,.2f}",
             "actual_value": f"₹{total_amount:,.2f}",
             "evidence": {

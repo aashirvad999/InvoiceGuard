@@ -247,7 +247,7 @@ INITIAL_INVOICES = [
                 "badge": "OCR Tamper",
                 "badge_class": "bg-error-container/30 text-error",
                 "title": "Potential document tampering (Font glyph mismatch)",
-                "description": "Font glyph metadata mismatch: A character within the quantity field has different bounding box font rendering properties compared to adjacent typography.",
+                "description": "Font span anomaly in field '90' (differing font family, size, or properties).",
                 "protocol": "Font stream: Arial-BoldMT embedded (vector) vs. Raster overlay glyph detected at coordinate [X: 412.4, Y: 188.0]."
             }
         ],

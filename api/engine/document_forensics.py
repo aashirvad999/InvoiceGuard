@@ -254,7 +254,7 @@ def inspect_pdf_document(file_bytes: bytes, filename: str = "document.pdf") -> D
                 "type": "font_inconsistency",
                 "category": "Document",
                 "title": "Potential font inconsistency",
-                "description": f"Potential document tampering signal: A character within numerical field '{s_span['line_text'].strip()}' exhibits differing font span characteristics (font family/size/properties) compared to surrounding typography.",
+                "description": f"Font span anomaly in field '{s_span['line_text'].strip()}' (differing font family, size, or properties).",
                 "expected_value": f"Uniform typography ({s_span['fonts'][0]['font']} {s_span['fonts'][0]['size']}pt)",
                 "actual_value": f"Mixed font spans ({s_span['fonts'][0]['font']} + {s_span['fonts'][1]['font'] if len(s_span['fonts'])>1 else 'Custom'})",
                 "why_it_matters": "Font inconsistency within quantity or amount fields is a common indicator of post-render figure alteration (e.g. 5 modified to 50).",
