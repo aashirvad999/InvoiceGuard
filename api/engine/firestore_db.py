@@ -99,8 +99,9 @@ SYSTEM_AUDIT_LOGS: List[Dict[str, Any]] = [
 # Initialize Seed Invoices per User
 from engine.seed_data import INITIAL_INVOICES, INITIAL_VENDORS, COMPLAINTS
 
-# User invoice store starts empty; populated dynamically upon upload or scenario load
-# Seed invoices are maintained in INITIAL_INVOICES for on-demand loading & admin inspection
+# Initialize seed invoices for Alex Vance so dashboard & spotlight are active on load
+for inv in INITIAL_INVOICES:
+    USER_INVOICES_STORE["usr_demo1_alex"][inv["id"]] = dict(inv)
 
 # Assign vendors
 for v in INITIAL_VENDORS[:3]:
@@ -117,8 +118,13 @@ for c in COMPLAINTS:
 # --- Firestore Access Helpers ---
 
 def get_user_invoices(uid: str) -> List[Dict[str, Any]]:
-    """Returns all invoices owned by user UID."""
-    return list(USER_INVOICES_STORE.get(uid, {}).values())
+    """Returns all invoices owned by user UID. Auto-seeds default invoices for demo users if empty."""
+    user_invs = list(USER_INVOICES_STORE.get(uid, {}).values())
+    if not user_invs and uid in ("usr_demo1_alex", "demo1"):
+        for inv in INITIAL_INVOICES:
+            USER_INVOICES_STORE[uid][inv["id"]] = dict(inv)
+        user_invs = list(USER_INVOICES_STORE.get(uid, {}).values())
+    return user_invs
 
 
 def find_invoice_robust(uid: Optional[str], invoice_id: str) -> Optional[Dict[str, Any]]:

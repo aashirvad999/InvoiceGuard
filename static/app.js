@@ -622,33 +622,92 @@ async function clearUserInvoices() {
   }
 }
 
+const DEFAULT_SAMPLE_INVOICE = {
+  id: 'INV-2026-0918',
+  invoice_number: 'INV-2026-0918',
+  filename: 'abc_tech_hardware_oct2026.pdf',
+  vendor_id: 'VEN-001',
+  vendor_name: 'ABC Technologies',
+  vendor_verified: true,
+  gstin: '27AAACA1234A1Z5',
+  issue_date: 'Oct 24, 2026',
+  received_date: 'Oct 24, 2026 · 14:32 IST',
+  sha256_short: '7f8b9d...4a12',
+  total_amount: 159000.0,
+  taxable_amount: 150000.0,
+  cgst_amount: 4500.0,
+  sgst_amount: 4500.0,
+  historical_variance_pct: '+169.5%',
+  threat_score: 74,
+  risk_level: 'Review Required',
+  status: 'review',
+  signals: [
+    {
+      title: 'Unregistered Destination Bank Account',
+      severity: 'CRITICAL',
+      icon: 'account_balance',
+      badge_class: 'bg-error/10 text-error',
+      description: "Payment destination ICICI Account *8821 was first observed 3 days ago across network nodes.",
+      expected_value: "HDFC Bank *4901 (Settled 14x)",
+      actual_value: "ICICI Bank *8821 (First Seen 3d ago)",
+      why_it_matters: "Unannounced bank account swaps are a top vector for business email compromise.",
+      recommended_action: "Call ABC Technologies out-of-band at +91 22 4920 1100 to verify."
+    },
+    {
+      title: 'Discrepant CGST Rate',
+      severity: 'WARNING',
+      icon: 'percent',
+      badge_class: 'bg-tertiary/10 text-tertiary',
+      description: "CGST charged at 3.0% instead of standard 9.0% for hardware peripherals.",
+      expected_value: "₹13,500 (9.0% of ₹1,50,000)",
+      actual_value: "₹4,500 (3.0%)",
+      why_it_matters: "Undercharging tax leads to tax credit rejection.",
+      recommended_action: "Request revised tax invoice with correct 9% CGST."
+    }
+  ],
+  passed_checks: ['GSTIN Format Valid', 'PO Matching Active'],
+  line_items: [
+    { description: 'Laptop Stand (Ergonomic Pro)', sku: 'LS-902-AL', qty: 5, unit_price: 1000.0, amount: 5000.0, status: 'Verified Regular', flagged: false },
+    { description: 'Mechanical Keyboard (Tenkeyless)', sku: 'MK-750-RGB', qty: 50, unit_price: 2000.0, amount: 100000.0, status: 'Volume Spike', flagged: true },
+    { description: 'USB-C Dual 4K Display Hub', sku: 'HUB-4K-DUAL', qty: 10, unit_price: 5400.0, amount: 54000.0, status: 'Verified Regular', flagged: false }
+  ],
+  financial_breakdown: {
+    taxable_subtotal: 150000.0,
+    cgst: 4500.0,
+    sgst: 4500.0,
+    expected_grand_total: 159000.0,
+    surplus_gap: 0,
+    gap_explanation: 'All line item mathematical sums reconcile.'
+  }
+};
+
 function renderDashboardView() {
   const spotlightSec = document.getElementById('analysis-spotlight');
+  if (spotlightSec) spotlightSec.classList.remove('hidden');
 
   if (STATE.invoices.length === 0) {
-    if (spotlightSec) spotlightSec.classList.add('hidden');
-    renderInvoicesTable();
-    renderVendorsGrid();
-    renderComplaintsList();
+    STATE.activeInvoiceId = DEFAULT_SAMPLE_INVOICE.id;
+    renderSpotlightInvoice(DEFAULT_SAMPLE_INVOICE.id, DEFAULT_SAMPLE_INVOICE);
   } else {
-    if (spotlightSec) spotlightSec.classList.remove('hidden');
-    
     if (!STATE.invoices.some(i => i.id === STATE.activeInvoiceId)) {
       STATE.activeInvoiceId = STATE.invoices[0].id;
     }
-    
     renderSpotlightInvoice(STATE.activeInvoiceId);
-    renderInvoicesTable();
-    renderVendorsGrid();
-    renderComplaintsList();
   }
+
+  renderInvoicesTable();
+  renderVendorsGrid();
+  renderComplaintsList();
 }
 
 // --- Active Invoice Analysis Spotlight Renderer ---
-function renderSpotlightInvoice(invoiceId) {
+function renderSpotlightInvoice(invoiceId, fallbackInv = DEFAULT_SAMPLE_INVOICE) {
   let inv = STATE.invoices.find(i => i.id === invoiceId || i.invoice_number === invoiceId);
-  if (!inv) {
+  if (!inv && STATE.invoices.length > 0) {
     inv = STATE.invoices[0];
+  }
+  if (!inv) {
+    inv = fallbackInv;
   }
   if (!inv) return;
 
@@ -1872,6 +1931,25 @@ function setupScrollSpy() {
   const navLinks = document.querySelectorAll('.nav-link');
   const scrollProgressBar = document.getElementById('scroll-progress-bar');
 
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      const secId = link.getAttribute('data-section') || (link.getAttribute('href') ? link.getAttribute('href').replace('#', '') : null);
+      if (!secId) return;
+      const targetSec = document.getElementById(secId);
+      if (targetSec) {
+        e.preventDefault();
+        targetSec.classList.remove('hidden');
+        const headerOffset = 80;
+        const elementPosition = targetSec.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({
+          top: Math.max(0, offsetPosition),
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+
   const updateActiveLink = () => {
     let current = 'overview';
     const winScroll = window.scrollY || document.documentElement.scrollTop;
@@ -1927,3 +2005,15 @@ function setupKeyboardShortcuts() {
     }
   });
 }
+
+// --- Application Startup Initialization ---
+(async function initApp() {
+  try {
+    await fetchDemoUsers();
+    await refreshUserData();
+    setupScrollSpy();
+    setupKeyboardShortcuts();
+  } catch (err) {
+    console.error('Initialization error:', err);
+  }
+})();
