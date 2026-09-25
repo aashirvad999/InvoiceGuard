@@ -504,17 +504,9 @@
             </button>
           </div>
 
-          <button onclick="downloadActivePDF()" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-on-surface text-xs font-medium flex items-center gap-1.5 transition-colors">
-            <span class="material-symbols-outlined text-[15px]">file_download</span>
-            <span>PDF</span>
-          </button>
           <button onclick="openFlagModalForActive()" class="px-3 py-1.5 rounded-lg bg-error/10 hover:bg-error/20 border border-error/30 text-error text-xs font-medium flex items-center gap-1.5 transition-colors">
             <span class="material-symbols-outlined text-[15px]">flag</span>
             <span>Report Vendor</span>
-          </button>
-          <button id="btn-spotlight-hold" onclick="togglePaymentHold()" class="px-3.5 py-1.5 rounded-lg bg-primary text-on-primary hover:bg-white text-xs font-semibold flex items-center gap-1.5 transition-all">
-            <span class="material-symbols-outlined text-[15px]">pause_circle</span>
-            <span id="spotlight-hold-text">Approve Payment (Hold)</span>
           </button>
         </div>
       </div>
@@ -544,10 +536,6 @@
                 <span class="material-symbols-outlined text-[15px] text-outline">schedule</span>
                 Ingested: <span id="spotlight-received-date" class="text-on-surface font-sans">Oct 24, 2026 · 14:32 IST</span>
               </span>
-              <span class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[15px] text-outline">fingerprint</span>
-                SHA-256: <span id="spotlight-sha256" class="text-on-surface">7f8b9d...4a12</span>
-              </span>
             </div>
           </div>
 
@@ -558,10 +546,6 @@
               <span class="text-2xl sm:text-3xl font-extrabold text-on-surface font-mono" id="spotlight-amount">₹1,59,000</span>
               <span class="text-xs text-outline font-mono">INR</span>
             </div>
-            <span id="spotlight-variance" class="text-xs font-mono text-tertiary flex items-center gap-1 mt-1">
-              <span class="material-symbols-outlined text-[13px]">report_problem</span>
-              Historical variance: +169.5%
-            </span>
           </div>
         </div>
       </div>
@@ -622,11 +606,6 @@
 
           <!-- Collapsible Evidence Cards Container -->
           <div class="flex flex-col gap-2.5" id="spotlight-evidence-container">
-            <!-- Dynamically populated via app.js -->
-          </div>
-
-          <!-- AI Explanation Container (Gemini AI Layer) -->
-          <div id="spotlight-ai-explanation" class="mt-4 pt-4 border-t border-white/5">
             <!-- Dynamically populated via app.js -->
           </div>
         </div>

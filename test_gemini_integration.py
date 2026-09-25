@@ -158,7 +158,10 @@ class TestGeminiIntegration(unittest.TestCase):
         self.assertIsInstance(explanation, str)
         print("\n--- TEST 2 OUTPUT ---")
         print("Risk Score:", risk["score"])
-        print("AI Explanation:", explanation)
+        try:
+            print("AI Explanation:", explanation)
+        except UnicodeEncodeError:
+            print("AI Explanation:", explanation.encode('ascii', 'replace').decode('ascii'))
 
     def test_3_wrong_gst(self):
         """TEST 3: Wrong GST → deterministic detector catches it → Gemini explains GST inconsistency."""
@@ -195,15 +198,17 @@ class TestGeminiIntegration(unittest.TestCase):
         self.assertIsInstance(explanation, str)
         print("\n--- TEST 3 OUTPUT ---")
         print("Risk Score:", risk["score"])
-        print("AI Explanation:", explanation)
+        try:
+            print("AI Explanation:", explanation)
+        except UnicodeEncodeError:
+            print("AI Explanation:", explanation.encode('ascii', 'replace').decode('ascii'))
 
     def test_4_remove_gemini_api_key(self):
         """TEST 4: Remove GEMINI_API_KEY → app still works → AI explanation returns fallback message."""
         orig_key = os.environ.get("GEMINI_API_KEY")
         try:
-            # Temporarily unset key
-            if "GEMINI_API_KEY" in os.environ:
-                del os.environ["GEMINI_API_KEY"]
+            # Temporarily set key to placeholder
+            os.environ["GEMINI_API_KEY"] = "YOUR_ACTUAL_GEMINI_API_KEY"
 
             # Deterministic math analysis MUST STILL SUCCEED
             math_res = validate_mathematical_consistency(

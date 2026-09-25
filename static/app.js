@@ -772,7 +772,7 @@ function renderSpotlightInvoice(invoiceId) {
             <span class="material-symbols-outlined text-[16px]" id="ev-spot-${idx}-icon">expand_more</span>
           </button>
         </div>
-        <div class="mt-2.5 pt-2.5 bg-surface-container-low/80 p-3.5 rounded-lg border border-white/5 flex flex-col gap-2.5" id="ev-spot-${idx}">
+        <div class="mt-2.5 pt-2.5 bg-surface-container-low/80 p-3.5 rounded-lg border border-white/5 flex flex-col gap-2.5 hidden" id="ev-spot-${idx}">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
             <div class="p-2 rounded bg-surface-container border border-white/5">
               <span class="text-[10px] uppercase text-outline font-bold block mb-0.5">Expected Value</span>
@@ -802,36 +802,19 @@ function renderSpotlightInvoice(invoiceId) {
     evContainer.innerHTML = html;
   }
 
-  // AI Explanation Rendering
-  const aiExplanationContainer = document.getElementById('spotlight-ai-explanation');
-  if (aiExplanationContainer) {
-    const expText = inv.ai_explanation || 'AI explanation temporarily unavailable. Deterministic analysis is still available.';
-    const isFallback = expText.includes('temporarily unavailable');
-    
-    if (isFallback) {
-      aiExplanationContainer.innerHTML = `
-        <div class="rounded-xl bg-tertiary/10 p-3.5 border border-tertiary/20 flex items-center gap-2.5 text-xs text-tertiary font-mono">
-          <span class="material-symbols-outlined text-[18px]">info</span>
-          <span>${expText}</span>
-        </div>
-      `;
-    } else {
-      aiExplanationContainer.innerHTML = `
-        <div class="rounded-xl bg-surface-container/90 p-4 border border-white/10 flex flex-col gap-2 shadow-inner">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2 text-primary font-mono text-xs font-bold uppercase tracking-wider">
-              <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
-              <span>AI Explanation (Gemini 3.6 Flash)</span>
-            </div>
-            <span class="text-[10px] font-mono text-secondary bg-secondary/10 px-2 py-0.5 rounded border border-secondary/20">Verified Non-Hallucinating</span>
-          </div>
-          <p class="text-xs text-on-surface leading-relaxed font-sans">
-            ${expText}
-          </p>
-        </div>
-      `;
-    }
-  }
+function formatMarkdown(text) {
+  if (!text) return '';
+  let formatted = text
+    .replace(/^### (.*$)/gim, '<h4 class="font-bold text-xs text-primary mt-2.5 mb-1 tracking-wide uppercase">$1</h4>')
+    .replace(/^## (.*$)/gim, '<h3 class="font-bold text-sm text-primary mt-2.5 mb-1">$1</h3>')
+    .replace(/^# (.*$)/gim, '<h2 class="font-bold text-base text-primary mt-2.5 mb-1">$1</h2>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-on-surface">$1</strong>')
+    .replace(/^\* (.*$)/gim, '<div class="flex items-start gap-1.5 ml-1 my-0.5"><span class="text-primary">•</span><span>$1</span></div>')
+    .replace(/---/g, '<hr class="border-white/10 my-2">')
+    .replace(/\n\n/g, '<div class="h-1.5"></div>')
+    .replace(/\n/g, '<br>');
+  return formatted;
+}
 
   // Deep Tab 1: Line Items
   const lineItemsBody = document.getElementById('spotlight-line-items-body');
@@ -1379,8 +1362,8 @@ function renderChatMessages() {
     } else {
       return `
         <div class="flex flex-col items-start">
-          <div class="bg-surface-container text-on-surface text-xs p-3.5 rounded-xl rounded-tl-none max-w-[95%] leading-relaxed border border-white/5">
-            <p>${msg.text}</p>
+          <div class="bg-surface-container text-on-surface text-xs p-3.5 rounded-xl rounded-tl-none max-w-[95%] leading-relaxed border border-white/5 space-y-1">
+            <div>${formatMarkdown(msg.text)}</div>
           </div>
           <span class="font-mono text-[10px] text-outline mt-1">InvoiceGuard Gemini · ${msg.confidence || '98% confidence'}</span>
         </div>
@@ -1455,6 +1438,19 @@ async function draftComplianceEmailForActive() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   } catch (err) {
     console.error('Error drafting notice:', err);
+  }
+}
+
+function toggleSpotlightEvidence(id) {
+  const el = document.getElementById(id);
+  const icon = document.getElementById(`${id}-icon`);
+  if (!el) return;
+  if (el.classList.contains('hidden')) {
+    el.classList.remove('hidden');
+    if (icon) icon.innerText = 'expand_less';
+  } else {
+    el.classList.add('hidden');
+    if (icon) icon.innerText = 'expand_more';
   }
 }
 
