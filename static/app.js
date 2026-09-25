@@ -24,6 +24,9 @@ const STATE = {
   invoicesFilter: 'all',
   searchQuery: '',
   adminData: null,
+  lastUserDataSequence: 0,
+  lastUploadedInvoice: null,
+  isUploading: false,
   chatMessages: [
     {
       sender: 'user',
@@ -43,8 +46,41 @@ const STATE = {
 function getAuthHeaders() {
   return {
     'Content-Type': 'application/json',
-    'X-User-UID': STATE.activeUser.uid
+    'X-User-UID': STATE.activeUser ? STATE.activeUser.uid : 'usr_demo1_alex',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache'
   };
+}
+
+// Global API Fetch Helper with Cache-Busting & Header Protection
+async function apiFetch(url, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  let finalUrl = url;
+
+  if (method === 'GET') {
+    const separator = finalUrl.includes('?') ? '&' : '?';
+    finalUrl = `${finalUrl}${separator}_t=${Date.now()}`;
+  }
+
+  const baseHeaders = getAuthHeaders();
+  if (options.body instanceof FormData) {
+    delete baseHeaders['Content-Type'];
+  }
+
+  const mergedOptions = {
+    cache: 'no-store',
+    ...options,
+    headers: {
+      ...baseHeaders,
+      ...(options.headers || {})
+    }
+  };
+
+  if (options.body instanceof FormData && mergedOptions.headers['Content-Type']) {
+    delete mergedOptions.headers['Content-Type'];
+  }
+
+  return fetch(finalUrl, mergedOptions);
 }
 
 // DOM Initialization
@@ -491,7 +527,7 @@ function animateThreatScore(scoreEl, targetScore) {
 // --- User-Isolated API Sync ---
 async function fetchDemoUsers() {
   try {
-    const res = await fetch('/api/auth/demo-users');
+    const res = await apiFetch('/api/auth/demo-users');
     const data = await res.json();
     STATE.demoUsers = data.users || [];
   } catch (err) {
@@ -499,33 +535,68 @@ async function fetchDemoUsers() {
   }
 }
 
-async function refreshUserData() {
+async function refreshUserData(expectedActiveInvoiceId = null) {
   if (STATE.activeUser.role === 'admin') {
     await refreshAdminData();
     return;
   }
 
+  const sequenceId = ++STATE.lastUserDataSequence;
+
   try {
-    const headers = getAuthHeaders();
     const [mRes, invRes, venRes, cmpRes] = await Promise.all([
-      fetch('/api/user/metrics', { headers }),
-      fetch('/api/user/invoices', { headers }),
-      fetch('/api/user/vendors', { headers }),
-      fetch('/api/user/complaints', { headers })
+      apiFetch('/api/user/metrics'),
+      apiFetch('/api/user/invoices'),
+      apiFetch('/api/user/vendors'),
+      apiFetch('/api/user/complaints')
     ]);
 
-    STATE.metrics = await mRes.json();
+    if (sequenceId < STATE.lastUserDataSequence) {
+      // Discard stale out-of-order response
+      return;
+    }
+
+    const fetchedMetrics = await mRes.json();
     const invData = await invRes.json();
-    STATE.invoices = invData.invoices || [];
+    let fetchedInvoices = invData.invoices || [];
     const venData = await venRes.json();
-    STATE.vendors = venData.vendors || [];
     const cmpData = await cmpRes.json();
+
+    // Preserve newly uploaded invoice if store update hasn't propagated to GET list yet
+    if (STATE.lastUploadedInvoice) {
+      const exists = fetchedInvoices.some(i => i.id === STATE.lastUploadedInvoice.id);
+      if (!exists) {
+        fetchedInvoices = [STATE.lastUploadedInvoice, ...fetchedInvoices];
+      }
+    }
+
+    STATE.metrics = fetchedMetrics;
+    STATE.invoices = fetchedInvoices;
+    STATE.vendors = venData.vendors || [];
     STATE.complaints = cmpData.complaints || [];
+
+    const targetActiveId = expectedActiveInvoiceId || STATE.activeInvoiceId || (STATE.invoices.length > 0 ? STATE.invoices[0].id : null);
+    if (targetActiveId && STATE.invoices.some(i => i.id === targetActiveId)) {
+      STATE.activeInvoiceId = targetActiveId;
+    }
+
+    const currentDashboardId = STATE.activeInvoiceId || (STATE.invoices.length > 0 ? STATE.invoices[0].id : 'none');
+    console.log('DASHBOARD RESPONSE:', currentDashboardId, 'metrics:', STATE.metrics);
 
     updateUserDisplay();
     renderDashboardView();
   } catch (err) {
     console.error('Error refreshing user data:', err);
+  }
+}
+
+function selectInvoiceForSpotlight(invoiceId) {
+  STATE.activeInvoiceId = invoiceId;
+  renderSpotlightInvoice(invoiceId);
+  renderInvoicesTable();
+  const spotlightSec = document.getElementById('analysis-spotlight');
+  if (spotlightSec && spotlightSec.classList.contains('hidden')) {
+    spotlightSec.classList.remove('hidden');
   }
 }
 
@@ -1188,7 +1259,21 @@ function handleHeroFileSelect(e) {
 }
 
 async function processUploadFile(file) {
+  if (STATE.isUploading) {
+    console.warn('Upload currently in progress. Discarding duplicate upload request.');
+    return;
+  }
+  if (!file) return;
+
+  STATE.isUploading = true;
+  console.log('UPLOAD START', file.name || file);
+
   const overlay = document.getElementById('upload-progress-overlay');
+  const dropzoneInput = document.getElementById('dropzone-file-input');
+  const heroInput = document.getElementById('hero-file-input');
+
+  if (dropzoneInput) dropzoneInput.disabled = true;
+  if (heroInput) heroInput.disabled = true;
   if (overlay) overlay.classList.remove('hidden');
 
   const setStep = (num, status) => {
@@ -1196,55 +1281,76 @@ async function processUploadFile(file) {
     if (!el) return;
     if (status === 'active') {
       el.className = 'flex items-center gap-2 text-primary font-bold';
-      el.children[0].className = 'material-symbols-outlined text-[16px] animate-spin';
-      el.children[0].innerText = 'sync';
+      if (el.children[0]) {
+        el.children[0].className = 'material-symbols-outlined text-[16px] animate-spin';
+        el.children[0].innerText = 'sync';
+      }
     } else if (status === 'done') {
       el.className = 'flex items-center gap-2 text-secondary';
-      el.children[0].className = 'material-symbols-outlined text-[16px]';
-      el.children[0].innerText = 'check_circle';
+      if (el.children[0]) {
+        el.children[0].className = 'material-symbols-outlined text-[16px]';
+        el.children[0].innerText = 'check_circle';
+      }
     }
   };
 
   setStep(1, 'done');
   setStep(2, 'active');
-
-  setTimeout(() => {
-    setStep(2, 'done');
-    setStep(3, 'active');
-  }, 400);
-
-  setTimeout(() => {
-    setStep(3, 'done');
-    setStep(4, 'active');
-  }, 750);
-
-  setTimeout(() => {
-    setStep(4, 'done');
-    setStep(5, 'active');
-  }, 1100);
+  setStep(3, 'active');
 
   try {
     let formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch('/api/user/invoices/upload', {
+    const res = await apiFetch('/api/user/invoices/upload', {
       method: 'POST',
-      headers: { 'X-User-UID': STATE.activeUser.uid },
       body: formData
     });
+
+    if (!res.ok) {
+      throw new Error(`Upload server responded with status HTTP ${res.status}`);
+    }
+
     const result = await res.json();
+    const newInvoice = result.invoice;
+    const newInvoiceId = result.invoice_id || (newInvoice && newInvoice.id);
 
-    setTimeout(async () => {
-      setStep(5, 'done');
-      if (overlay) overlay.classList.add('hidden');
-      await refreshUserData();
-      selectInvoiceForSpotlight(result.invoice_id);
-    }, 1400);
+    setStep(4, 'done');
+    setStep(5, 'done');
 
+    if (overlay) overlay.classList.add('hidden');
+    if (dropzoneInput) dropzoneInput.disabled = false;
+    if (heroInput) heroInput.disabled = false;
+    STATE.isUploading = false;
+
+    console.log('UPLOAD RESPONSE RECEIVED:', newInvoiceId);
+
+    if (newInvoice) {
+      STATE.activeInvoiceId = newInvoiceId;
+      console.log('SETTING ACTIVE INVOICE:', newInvoiceId);
+
+      STATE.lastUploadedInvoice = newInvoice;
+
+      // Immediately prepend newly uploaded invoice into state
+      STATE.invoices = [newInvoice, ...STATE.invoices.filter(i => i.id !== newInvoiceId)];
+
+      // Immediately update dashboard spotlight & risk score
+      renderDashboardView();
+      selectInvoiceForSpotlight(newInvoiceId);
+    }
+
+    // Refresh background metrics synchronously AFTER upload completes
+    console.log('REFRESHING DASHBOARD');
+    await refreshUserData(newInvoiceId);
+
+    showToast(`Invoice ${newInvoiceId || ''} uploaded and analyzed successfully.`);
   } catch (err) {
     if (overlay) overlay.classList.add('hidden');
-    showToast('Upload failed. Please check document.');
-    console.error(err);
+    if (dropzoneInput) dropzoneInput.disabled = false;
+    if (heroInput) heroInput.disabled = false;
+    STATE.isUploading = false;
+    showToast('Upload failed. Please check document format.');
+    console.error('Upload error:', err);
   }
 }
 
