@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Vendor Feedback & Compliance — InvoiceGuard</title>
+  
+  <!-- Fonts: Space Grotesk for Headings/Chrome & JetBrains Mono for Numeric Data -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #0B0F14;
+        color: #F8FAFC;
+      }
+    }
+
+    .font-mono, [data-mono] {
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    .shield-logo-box {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 184, 217, 0.3);
+      box-shadow: 0 0 10px rgba(0, 184, 217, 0.15);
+      transition: all 0.3s ease;
+    }
+    .shield-logo-box:hover {
+      border-color: #00B8D9;
+      box-shadow: 0 0 22px rgba(0, 184, 217, 0.45);
+    }
+    .shield-scan-line {
+      position: absolute;
+      top: -100%;
+      left: 0;
+      width: 100%;
+      height: 60%;
+      background: linear-gradient(to bottom, transparent, rgba(0, 184, 217, 0.75), transparent);
+      animation: shieldScan 4s linear infinite;
+      pointer-events: none;
+    }
+    .shield-logo-box:hover .shield-scan-line {
+      animation: shieldScan 1.2s linear infinite;
+    }
+    @keyframes shieldScan {
+      0% { top: -60%; }
+      100% { top: 130%; }
+    }
+
+    .nav-link {
+      position: relative;
+      transition: color 0.2s ease;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0%;
+      height: 2px;
+      background-color: #4285F4;
+      box-shadow: 0 0 8px rgba(66, 133, 244, 0.8);
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 1px;
+    }
+    .nav-link:hover::after, .nav-link.active::after {
+      width: 70%;
+    }
+
+    .star-rating-btn {
+      color: #94A3B8;
+      transition: color 0.2s ease, transform 0.15s ease;
+    }
+    .star-rating-btn:hover, .star-rating-btn.selected {
+      color: #FBBC05;
+      transform: scale(1.15);
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(66, 133, 244, 0.4); }
+  </style>
+
+  <!-- Tailwind CDN & Custom Tokens -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#17212B",
+            "background": "#0B0F14",
+            "on-surface": "#F8FAFC",
+            "on-surface-variant": "#94A3B8",
+            "surface-container-lowest": "#111820",
+            "surface-container-low": "#111820",
+            "surface-container": "#17212B",
+            "surface-container-high": "#1C2936",
+            "surface-container-highest": "#223142",
+            "surface-bright": "#283A4E",
+            
+            "primary": "#4285F4",
+            "primary-container": "#1A365D",
+            "on-primary": "#FFFFFF",
+            "on-primary-container": "#D2E3FC",
+            
+            "secondary": "#34A853",
+            "secondary-container": "#0D381E",
+            "on-secondary": "#FFFFFF",
+
+            "warning": "#FBBC05",
+            "warning-container": "#3D2E00",
+            "on-warning": "#000000",
+            
+            "tertiary": "#EA4335",
+            "tertiary-container": "#3C1715",
+            "on-tertiary": "#FFFFFF",
+
+            "error": "#EA4335",
+            "error-container": "#3C1715",
+            "outline": "#94A3B8",
+            "outline-variant": "#1F2B3A",
+
+            "accent": "#00B8D9",
+            "ai-accent": "#00B8D9"
+          },
+          fontFamily: {
+            sans: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased selection:bg-primary selection:text-on-primary min-h-screen relative overflow-x-hidden">
+
+  <!-- Faint 1px Noise Overlay -->
+  <div class="grain-overlay"></div>
+
+  <!-- Custom Cursor Glow -->
+  <div id="cursor-glow" class="fixed top-0 left-0 w-[480px] h-[480px] rounded-full pointer-events-none z-40 transition-opacity duration-300 opacity-0" style="background: radial-gradient(circle, rgba(0, 184, 217, 0.35) 0%, rgba(0, 184, 217, 0) 70%); mix-blend-mode: screen; filter: blur(45px); transform: translate(-50%, -50%);"></div>
+
+  <!-- ================= STICKY GLOBAL HEADER ================= -->
+  <header class="sticky top-0 z-50 w-full backdrop-blur-xl bg-[#0B0F14]/85 border-b border-[#4285F4]/15 transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="w-8 h-8 rounded-lg bg-[#17212B] border border-[#00B8D9]/30 flex items-center justify-center text-[#00B8D9] group-hover:border-[#00B8D9] transition-all shadow-[0_0_10px_rgba(0,184,217,0.15)] shield-logo-box">
+          <span class="material-symbols-outlined text-[18px]">shield</span>
+          <div class="shield-scan-line"></div>
+        </div>
+        <div class="flex items-center gap-0.5">
+          <span id="brand-wordmark" class="font-bold text-[19px] tracking-tight text-[#F8FAFC] font-sans">InvoiceGuard</span>
+          <span id="brand-cursor" class="font-mono font-bold text-[18px] text-[#4285F4] select-none">_</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Bar -->
+      <nav id="user-nav-bar" class="hidden md:flex items-center gap-1.5 bg-[#111820]/90 p-1 rounded-full border border-white/5 shadow-inner">
+        <a href="/" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/5 rounded-full transition-all font-sans" data-section="overview">Home</a>
+        <a href="/vendors" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/5 rounded-full transition-all font-sans" data-section="vendors">Vendors</a>
+        <a href="/feedback" class="nav-link px-4 py-1.5 text-xs font-bold text-white bg-[#4285F4] rounded-full shadow-[0_0_12px_rgba(66,133,244,0.4)] active transition-all font-sans" data-section="feedback">Feedback</a>
+      </nav>
+
+      <!-- Desktop Navigation for Admin Mode -->
+      <nav id="admin-nav-bar" class="hidden items-center gap-1 bg-[#111820]/90 p-1 rounded-full border border-error/30 shadow-inner">
+        <span class="px-3.5 py-1 rounded-full text-xs font-mono font-bold text-error bg-error/10">🛡 ADMIN SENTINEL</span>
+        <button onclick="exitAdminMode()" class="px-3 py-1 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full font-medium transition-colors font-sans">
+          Exit Admin Mode
+        </button>
+      </nav>
+
+      <!-- Header Action Group -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        <button onclick="openAdminLoginModal()" id="header-admin-login-btn" title="Admin Portal Login (admin:admins)" class="px-3.5 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-outline hover:text-on-surface border border-white/5 text-xs font-mono font-medium transition-colors">
+          Admin
+        </button>
+
+        <div onclick="openDemoUserModal()" class="flex items-center gap-3 px-3.5 py-1.5 bg-surface-container-low hover:bg-surface-container rounded-xl border border-white/10 cursor-pointer transition-all shadow-sm hover:border-white/20">
+          <div id="header-avatar-container" class="w-7 h-7 rounded-full bg-[#4285F4]/15 border border-[#4285F4]/30 flex items-center justify-center shrink-0 text-[#4285F4] shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">person</span>
+          </div>
+          <div class="flex flex-col text-left min-w-[100px] sm:min-w-[120px]">
+            <span class="text-xs font-bold text-on-surface leading-tight font-sans" id="user-display-name">Alex Vance</span>
+            <span class="text-[11px] text-on-surface-variant font-mono leading-tight truncate max-w-[130px]" id="user-display-role">Finance Sec Lead</span>
+          </div>
+          <span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+        </div>
+
+        <button onclick="clearUserInvoices()" title="Clear all uploaded invoices for current profile" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-error/10 hover:bg-error/20 text-error border border-error/20 text-xs font-semibold transition-all font-sans">
+          <span class="material-symbols-outlined text-[16px]">delete_sweep</span>
+          <span class="hidden sm:inline">Clear Invoices</span>
+        </button>
+      </div>
+
+    </div>
+    <div id="scroll-progress-bar" class="h-[2px] bg-gradient-to-r from-[#4285F4] via-[#00B8D9] to-[#4285F4] w-0 transition-all duration-75 shadow-[0_0_8px_rgba(66,133,244,0.6)]"></div>
+  </header>
+
+  <!-- ================= MAIN FEEDBACK PAGE ================= -->
+  <main id="user-main-view" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-10 relative">
+
+    <!-- Page Header Banner -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5">
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-tertiary/10 text-tertiary border border-tertiary/20 flex items-center justify-center">
+            <span class="material-symbols-outlined text-[20px]">rate_review</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-on-surface">Vendor Feedback & Compliance Portal</h1>
+        </div>
+        <p class="text-xs sm:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
+          Log suspicious vendor wire changes, record payment routing discrepancies, and submit platform user feedback for continuous model tuning.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3 self-start md:self-auto">
+        <button onclick="openFlagModalForActive()" class="px-4 py-2.5 rounded-xl bg-error/10 hover:bg-error/20 border border-error/30 text-error font-bold text-xs flex items-center gap-2 transition-all">
+          <span class="material-symbols-outlined text-[18px]">add_alert</span>
+          <span>Report Vendor Flag</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- Left Column: Compliance Complaints & Flagged Vendors (7 cols) -->
+      <div class="lg:col-span-7 flex flex-col gap-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+          <div>
+            <h2 class="text-lg font-bold text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-tertiary text-[20px]">warning</span>
+              Compliance Flags & Wire Alerts
+            </h2>
+            <span class="text-xs text-outline">History of reported discrepancies across vendor network</span>
+          </div>
+
+          <div class="flex items-center gap-1 bg-surface-container p-1 rounded-xl border border-white/5 text-xs font-medium">
+            <button onclick="filterComplaints('all')" id="cfilter-all" class="cfilter-btn px-2.5 py-1 rounded-lg bg-surface-container-high text-on-surface font-semibold">All</button>
+            <button onclick="filterComplaints('open')" id="cfilter-open" class="cfilter-btn px-2.5 py-1 rounded-lg text-on-surface-variant hover:text-on-surface">Open</button>
+            <button onclick="filterComplaints('resolved')" id="cfilter-resolved" class="cfilter-btn px-2.5 py-1 rounded-lg text-on-surface-variant hover:text-on-surface">Resolved</button>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3" id="feedback-complaints-list">
+          <!-- Dynamically populated via app.js -->
+        </div>
+      </div>
+
+      <!-- Right Column: User Feedback & Quality Rating Widget (5 cols) -->
+      <div class="lg:col-span-5 flex flex-col gap-6">
+        <div class="rounded-2xl bg-surface-container-low border border-white/5 p-6 flex flex-col gap-5 shadow-lg">
+          <div class="flex flex-col gap-1 pb-3 border-b border-white/5">
+            <h2 class="text-base font-bold text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[20px]">thumb_up</span>
+              InvoiceGuard Platform Rating
+            </h2>
+            <p class="text-xs text-outline leading-relaxed">
+              Help us refine deterministic check accuracy and AI explanation quality.
+            </p>
+          </div>
+
+          <!-- Star Rating Selector -->
+          <div class="flex flex-col gap-2">
+            <span class="text-xs font-mono uppercase text-outline">Overall System Satisfaction</span>
+            <div class="flex items-center gap-2" id="star-rating-container">
+              <button onclick="setStarRating(1)" class="star-rating-btn text-[28px] focus:outline-none" title="1 Star">★</button>
+              <button onclick="setStarRating(2)" class="star-rating-btn text-[28px] focus:outline-none" title="2 Stars">★</button>
+              <button onclick="setStarRating(3)" class="star-rating-btn text-[28px] focus:outline-none" title="3 Stars">★</button>
+              <button onclick="setStarRating(4)" class="star-rating-btn text-[28px] focus:outline-none" title="4 Stars">★</button>
+              <button onclick="setStarRating(5)" class="star-rating-btn text-[28px] focus:outline-none selected" title="5 Stars">★</button>
+              <span id="star-rating-label" class="text-xs font-mono font-bold text-primary ml-2">5.0 / 5.0 (Excellent)</span>
+            </div>
+          </div>
+
+          <!-- Feedback Category -->
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-mono uppercase text-outline">Feedback Category</label>
+            <select id="feedback-category-select" class="bg-surface-container text-on-surface text-xs p-3 rounded-xl border border-white/5 focus:outline-none focus:border-primary font-sans">
+              <option value="Detection Accuracy">Forensic Detection Accuracy</option>
+              <option value="AI Explanation Quality">AI Gemini Explanation Quality</option>
+              <option value="UI & Workflow Experience">UI & User Experience</option>
+              <option value="Feature Request">Feature Request / Enhancement</option>
+              <option value="Bug Report">Bug Report</option>
+            </select>
+          </div>
+
+          <!-- Comment Box -->
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-mono uppercase text-outline">Detailed Observations or Comments</label>
+            <textarea id="feedback-comment-text" rows="4" placeholder="Share your experience with invoice detection, false positives, or suggestions..." class="bg-surface-container text-on-surface text-xs p-3 rounded-xl border border-white/5 focus:outline-none focus:border-primary placeholder:text-outline font-sans leading-relaxed"></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <button onclick="submitUserFeedbackForm()" class="w-full py-3 rounded-xl bg-primary text-on-primary font-bold text-xs shadow-md transition-all btn-primary-glow flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">send</span>
+            <span>Submit Feedback Report</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Shared Persona Switcher Modal -->
+  <div id="demo-user-modal" class="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface-container-low border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-white/5">
+        <h3 class="text-base font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#4285F4]">switch_account</span>
+          Select Operating Persona
+        </h3>
+        <button onclick="closeDemoUserModal()" class="text-outline hover:text-on-surface">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <div id="demo-users-modal-list" class="flex flex-col gap-2 max-h-[360px] overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- Shared Admin Login Modal -->
+  <div id="admin-login-modal" class="fixed inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface-container-low border border-error/30 rounded-2xl p-6 w-full max-w-md shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-white/5">
+        <h3 class="text-base font-bold text-on-surface flex items-center gap-2 text-error">
+          <span class="material-symbols-outlined">shield_person</span>
+          Admin Sentinel Authentication
+        </h3>
+        <button onclick="closeAdminLoginModal()" class="text-outline hover:text-on-surface">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <form onsubmit="handleAdminLogin(event)" class="flex flex-col gap-3 text-xs font-sans">
+        <div>
+          <label class="block text-outline mb-1 font-mono">Username</label>
+          <input id="admin-username-input" type="text" value="admin" class="w-full bg-surface-container text-on-surface p-2.5 rounded-xl border border-white/5 font-mono focus:outline-none focus:border-error">
+        </div>
+        <div>
+          <label class="block text-outline mb-1 font-mono">Password</label>
+          <input id="admin-password-input" type="password" value="admins" class="w-full bg-surface-container text-on-surface p-2.5 rounded-xl border border-white/5 font-mono focus:outline-none focus:border-error">
+        </div>
+        <button type="submit" class="mt-2 w-full py-2.5 rounded-xl bg-error text-on-error font-bold text-xs shadow-lg hover:bg-red-600 transition-colors">
+          Authenticate CISO Admin Session
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Shared Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-surface-container-high text-on-surface border border-white/10 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 opacity-0 translate-y-4 transition-all duration-300 pointer-events-none">
+    <span class="material-symbols-outlined text-primary text-[20px]">info</span>
+    <span id="toast-msg" class="text-xs font-medium">Notification</span>
+  </div>
+
+  <script src="/static/app.js"></script>
+  <script>
+    let selectedRating = 5;
+
+    function setStarRating(rating) {
+      selectedRating = rating;
+      const buttons = document.querySelectorAll('.star-rating-btn');
+      buttons.forEach((btn, index) => {
+        if (index < rating) {
+          btn.classList.add('selected');
+        } else {
+          btn.classList.remove('selected');
+        }
+      });
+      const label = document.getElementById('star-rating-label');
+      if (label) {
+        label.innerText = `${rating}.0 / 5.0 (${rating === 5 ? 'Excellent' : (rating >= 4 ? 'Good' : 'Needs Work')})`;
+      }
+    }
+
+    function submitUserFeedbackForm() {
+      const cat = document.getElementById('feedback-category-select')?.value || 'General';
+      const comment = document.getElementById('feedback-comment-text')?.value;
+      if (!comment || comment.trim().length === 0) {
+        showToast('Please enter your observations or comments before submitting.');
+        return;
+      }
+      document.getElementById('feedback-comment-text').value = '';
+      showToast(`Thank you! Your ${selectedRating}-star feedback for ${cat} has been submitted.`);
+    }
+
+    function filterComplaints(filterType) {
+      document.querySelectorAll('.cfilter-btn').forEach(b => {
+        b.className = 'cfilter-btn px-2.5 py-1 rounded-lg text-on-surface-variant hover:text-on-surface';
+      });
+      const active = document.getElementById(`cfilter-${filterType}`);
+      if (active) active.className = 'cfilter-btn px-2.5 py-1 rounded-lg bg-surface-container-high text-on-surface font-semibold';
+      renderComplaintsListFiltered(filterType);
+    }
+
+    function renderComplaintsListFiltered(filterType) {
+      const list = document.getElementById('feedback-complaints-list');
+      if (!list) return;
+      let complaints = STATE.complaints || [];
+      if (filterType === 'open') {
+        complaints = complaints.filter(c => c.status === 'open');
+      } else if (filterType === 'resolved') {
+        complaints = complaints.filter(c => c.status === 'resolved');
+      }
+
+      if (complaints.length === 0) {
+        list.innerHTML = `
+          <div class="py-12 text-center text-on-surface-variant bg-surface-container-low rounded-2xl border border-white/5">
+            <span class="material-symbols-outlined text-[36px] text-outline mb-2">check_circle</span>
+            <p class="font-medium text-sm text-on-surface">No compliance flags recorded</p>
+            <span class="text-xs text-outline">All payment routing accounts match baseline affidavits.</span>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = complaints.map(c => `
+        <div class="p-4 rounded-2xl bg-surface-container-low border border-white/5 flex flex-col gap-2 shadow-sm hover:border-white/10 transition-colors">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-tertiary/10 text-tertiary font-mono text-[10px] uppercase font-bold">${c.severity || 'FLAG'}</span>
+              <span class="font-bold text-sm text-on-surface font-sans">${c.vendor_name || 'Vendor Flag'}</span>
+            </div>
+            <span class="text-xs font-mono text-outline">${c.date || 'Oct 2026'}</span>
+          </div>
+          <p class="text-xs text-on-surface-variant leading-relaxed">${c.issue || c.reason || 'Discrepancy in bank account destination.'}</p>
+          <div class="flex items-center justify-between text-[11px] font-mono text-outline pt-2 border-t border-white/5">
+            <span>Reported by: ${c.reporter || 'Treasury Officer'}</span>
+            <span class="${c.status === 'open' ? 'text-tertiary' : 'text-secondary'} font-semibold uppercase">${c.status || 'open'}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => filterComplaints('all'), 250);
+    });
+  </script>
+</body>
+</html>

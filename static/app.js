@@ -7,7 +7,7 @@
 
 // Global State
 const STATE = {
-  activeInvoiceId: 'INV-2026-0918',
+  activeInvoiceId: null,
   invoices: [],
   vendors: [],
   complaints: [],
@@ -683,16 +683,19 @@ const DEFAULT_SAMPLE_INVOICE = {
 
 function renderDashboardView() {
   const spotlightSec = document.getElementById('analysis-spotlight');
-  if (spotlightSec) spotlightSec.classList.remove('hidden');
+  const assistantSec = document.getElementById('assistant');
 
-  if (STATE.invoices.length === 0) {
-    STATE.activeInvoiceId = DEFAULT_SAMPLE_INVOICE.id;
-    renderSpotlightInvoice(DEFAULT_SAMPLE_INVOICE.id, DEFAULT_SAMPLE_INVOICE);
-  } else {
+  if (spotlightSec) spotlightSec.classList.remove('hidden');
+  if (assistantSec) assistantSec.classList.remove('hidden');
+
+  if (STATE.invoices.length > 0) {
     if (!STATE.invoices.some(i => i.id === STATE.activeInvoiceId)) {
       STATE.activeInvoiceId = STATE.invoices[0].id;
     }
     renderSpotlightInvoice(STATE.activeInvoiceId);
+  } else {
+    STATE.activeInvoiceId = null;
+    renderSpotlightInvoice(null, null);
   }
 
   renderInvoicesTable();
@@ -701,15 +704,69 @@ function renderDashboardView() {
 }
 
 // --- Active Invoice Analysis Spotlight Renderer ---
-function renderSpotlightInvoice(invoiceId, fallbackInv = DEFAULT_SAMPLE_INVOICE) {
-  let inv = STATE.invoices.find(i => i.id === invoiceId || i.invoice_number === invoiceId);
+function renderSpotlightInvoice(invoiceId, fallbackInv = null) {
+  let inv = invoiceId ? STATE.invoices.find(i => i.id === invoiceId || i.invoice_number === invoiceId) : null;
   if (!inv && STATE.invoices.length > 0) {
     inv = STATE.invoices[0];
   }
-  if (!inv) {
+  if (!inv && fallbackInv) {
     inv = fallbackInv;
   }
-  if (!inv) return;
+
+  if (!inv) {
+    // Render clean empty spotlight state when 0 invoices in repository
+    const vName = document.getElementById('spotlight-vendor-name');
+    if (vName) vName.innerText = "No Invoice Selected";
+
+    const invNum = document.getElementById('spotlight-inv-num');
+    if (invNum) invNum.innerText = "#NONE";
+
+    const vBadge = document.getElementById('spotlight-vendor-badge');
+    if (vBadge) {
+      vBadge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-outline/20 text-outline font-mono text-[11px] font-semibold';
+      vBadge.innerHTML = `<span class="material-symbols-outlined text-[13px]">info</span> Standby`;
+    }
+
+    const issDate = document.getElementById('spotlight-issue-date');
+    if (issDate) issDate.innerText = "N/A";
+
+    const recDate = document.getElementById('spotlight-received-date');
+    if (recDate) recDate.innerText = "N/A";
+
+    const amt = document.getElementById('spotlight-amount');
+    if (amt) amt.innerText = "₹0";
+
+    const scoreNum = document.getElementById('spotlight-score-num');
+    if (scoreNum) scoreNum.innerText = "0";
+
+    const riskBadge = document.getElementById('spotlight-risk-badge');
+    if (riskBadge) {
+      riskBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-outline/10 text-outline font-mono text-xs font-bold border border-outline/20';
+      riskBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Standby';
+    }
+
+    const meterCircle = document.getElementById('spotlight-meter-circle');
+    if (meterCircle) {
+      meterCircle.style.strokeDashoffset = 314.16;
+    }
+
+    const evidenceContainer = document.getElementById('spotlight-evidence-container');
+    if (evidenceContainer) {
+      evidenceContainer.innerHTML = `
+        <div class="p-6 bg-surface-container rounded-xl border border-white/5 text-center text-outline text-xs flex flex-col items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[28px]">shield</span>
+          <span>No active threat signals. Upload an invoice PDF above to run multi-agent forensic verification.</span>
+        </div>
+      `;
+    }
+
+    const lineItemsTbody = document.getElementById('spotlight-line-items-body');
+    if (lineItemsTbody) {
+      lineItemsTbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-outline text-xs">No line items. Upload an invoice to inspect line-item breakdowns.</td></tr>`;
+    }
+
+    return;
+  }
 
   STATE.activeInvoiceId = inv.id;
 
@@ -1927,53 +1984,65 @@ function showToast(msg) {
 
 // --- Scroll Spy & Keyboard Shortcuts ---
 function setupScrollSpy() {
-  const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-link');
   const scrollProgressBar = document.getElementById('scroll-progress-bar');
+  const currentPath = window.location.pathname;
 
   navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
-      const secId = link.getAttribute('data-section') || (link.getAttribute('href') ? link.getAttribute('href').replace('#', '') : null);
-      if (!secId) return;
-      const targetSec = document.getElementById(secId);
-      if (targetSec) {
-        e.preventDefault();
-        targetSec.classList.remove('hidden');
-        const headerOffset = 80;
-        const elementPosition = targetSec.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-        window.scrollTo({
-          top: Math.max(0, offsetPosition),
-          behavior: 'smooth'
-        });
+      const href = link.getAttribute('href');
+      if (href && href.startsWith('/#')) {
+        const targetId = href.replace('/#', '');
+        const targetSec = document.getElementById(targetId);
+        if (targetSec && (currentPath === '/' || currentPath.endsWith('index.html'))) {
+          e.preventDefault();
+          targetSec.classList.remove('hidden');
+          const headerOffset = 80;
+          const elementPosition = targetSec.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          window.scrollTo({
+            top: Math.max(0, offsetPosition),
+            behavior: 'smooth'
+          });
+        }
       }
     });
   });
 
   const updateActiveLink = () => {
-    let current = 'overview';
-    const winScroll = window.scrollY || document.documentElement.scrollTop;
+    const activeClass = 'nav-link px-4 py-1.5 text-xs font-bold text-white bg-[#4285F4] rounded-full shadow-[0_0_12px_rgba(66,133,244,0.4)] active transition-all font-sans';
+    const inactiveClass = 'nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/5 rounded-full transition-all font-sans';
 
-    if (winScroll < 120) {
-      current = 'overview';
+    if (currentPath.includes('vendors')) {
+      navLinks.forEach(link => {
+        if (link.getAttribute('data-section') === 'vendors' || link.getAttribute('href') === '/vendors') {
+          link.className = activeClass;
+        } else {
+          link.className = inactiveClass;
+        }
+      });
+    } else if (currentPath.includes('feedback')) {
+      navLinks.forEach(link => {
+        if (link.getAttribute('data-section') === 'feedback' || link.getAttribute('href') === '/feedback') {
+          link.className = activeClass;
+        } else {
+          link.className = inactiveClass;
+        }
+      });
     } else {
-      sections.forEach(sec => {
-        const top = sec.offsetTop - 140;
-        if (winScroll >= top) {
-          current = sec.getAttribute('id');
+      navLinks.forEach(link => {
+        const secAttr = link.getAttribute('data-section');
+        const href = link.getAttribute('href');
+        if (secAttr === 'overview' || secAttr === 'home' || href === '/' || href === '/index.html') {
+          link.className = activeClass;
+        } else {
+          link.className = inactiveClass;
         }
       });
     }
 
-    navLinks.forEach(link => {
-      if (link.getAttribute('data-section') === current) {
-        link.className = 'nav-link px-4 py-1.5 text-xs font-medium text-primary active transition-all relative font-mono tracking-wider';
-      } else {
-        link.className = 'nav-link px-4 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-all relative';
-      }
-    });
-
     if (scrollProgressBar) {
+      const winScroll = window.scrollY || document.documentElement.scrollTop;
       const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
       const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
       scrollProgressBar.style.width = scrolled + '%';

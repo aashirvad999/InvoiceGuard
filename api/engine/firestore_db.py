@@ -99,10 +99,7 @@ SYSTEM_AUDIT_LOGS: List[Dict[str, Any]] = [
 # Initialize Seed Invoices per User
 from engine.seed_data import INITIAL_INVOICES, INITIAL_VENDORS, COMPLAINTS
 
-# Initialize seed invoices for Alex Vance so dashboard & spotlight are active on load
-for inv in INITIAL_INVOICES:
-    USER_INVOICES_STORE["usr_demo1_alex"][inv["id"]] = dict(inv)
-
+# USER_INVOICES_STORE starts empty (no dummy invoices seeded)
 # Assign vendors
 for v in INITIAL_VENDORS[:3]:
     USER_VENDORS_STORE["usr_demo1_alex"][v["id"]] = dict(v)
@@ -118,13 +115,8 @@ for c in COMPLAINTS:
 # --- Firestore Access Helpers ---
 
 def get_user_invoices(uid: str) -> List[Dict[str, Any]]:
-    """Returns all invoices owned by user UID. Auto-seeds default invoices for demo users if empty."""
-    user_invs = list(USER_INVOICES_STORE.get(uid, {}).values())
-    if not user_invs and uid in ("usr_demo1_alex", "demo1"):
-        for inv in INITIAL_INVOICES:
-            USER_INVOICES_STORE[uid][inv["id"]] = dict(inv)
-        user_invs = list(USER_INVOICES_STORE.get(uid, {}).values())
-    return user_invs
+    """Returns all invoices owned by user UID."""
+    return list(USER_INVOICES_STORE.get(uid, {}).values())
 
 
 def find_invoice_robust(uid: Optional[str], invoice_id: str) -> Optional[Dict[str, Any]]:
@@ -244,8 +236,33 @@ def save_user_invoice(uid: str, invoice_data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def clear_user_invoices(uid: str) -> bool:
-    """Clears all uploaded invoices for user UID."""
+    """Clears all uploaded invoices for user UID and purges persistent disk cache."""
     USER_INVOICES_STORE[uid] = {}
+    try:
+        import tempfile, shutil
+        storage_base = os.getenv("STORAGE_BASE", os.path.join(tempfile.gettempdir(), "invoiceguard"))
+        u_dir = os.path.join(storage_base, "users", uid, "invoices")
+        if os.path.exists(u_dir):
+            shutil.rmtree(u_dir, ignore_errors=True)
+        all_dir = os.path.join(storage_base, "all_invoices")
+        if os.path.exists(all_dir):
+            shutil.rmtree(all_dir, ignore_errors=True)
+    except Exception:
+        pass
+    return True
+
+def clear_all_invoices_all_users() -> bool:
+    """Clears all invoices across all users and purges disk storage."""
+    for uid in USER_INVOICES_STORE:
+        USER_INVOICES_STORE[uid] = {}
+    try:
+        import tempfile, shutil
+        storage_base = os.getenv("STORAGE_BASE", os.path.join(tempfile.gettempdir(), "invoiceguard"))
+        if os.path.exists(storage_base):
+            shutil.rmtree(storage_base, ignore_errors=True)
+            os.makedirs(storage_base, exist_ok=True)
+    except Exception:
+        pass
     return True
 
 

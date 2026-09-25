@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Vendors Registry — InvoiceGuard</title>
+  
+  <!-- Fonts: Space Grotesk for Headings/Chrome & JetBrains Mono for Numeric Data -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #0B0F14;
+        color: #F8FAFC;
+      }
+    }
+
+    /* Monospace for numeric & data values */
+    .font-mono, [data-mono] {
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    /* Faint 1px Grain/Noise Overlay */
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* Shield Logo Continuous Scan Line */
+    .shield-logo-box {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 184, 217, 0.3);
+      box-shadow: 0 0 10px rgba(0, 184, 217, 0.15);
+      transition: all 0.3s ease;
+    }
+    .shield-logo-box:hover {
+      border-color: #00B8D9;
+      box-shadow: 0 0 22px rgba(0, 184, 217, 0.45);
+    }
+    .shield-scan-line {
+      position: absolute;
+      top: -100%;
+      left: 0;
+      width: 100%;
+      height: 60%;
+      background: linear-gradient(to bottom, transparent, rgba(0, 184, 217, 0.75), transparent);
+      animation: shieldScan 4s linear infinite;
+      pointer-events: none;
+    }
+    .shield-logo-box:hover .shield-scan-line {
+      animation: shieldScan 1.2s linear infinite;
+    }
+    @keyframes shieldScan {
+      0% { top: -60%; }
+      100% { top: 130%; }
+    }
+
+    /* Header Nav Link Underline Grow from Center */
+    .nav-link {
+      position: relative;
+      transition: color 0.2s ease;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0%;
+      height: 2px;
+      background-color: #4285F4;
+      box-shadow: 0 0 8px rgba(66, 133, 244, 0.8);
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 1px;
+    }
+    .nav-link:hover::after, .nav-link.active::after {
+      width: 70%;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(66, 133, 244, 0.4); }
+  </style>
+
+  <!-- Tailwind CDN & Custom Tokens -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#17212B",
+            "background": "#0B0F14",
+            "on-surface": "#F8FAFC",
+            "on-surface-variant": "#94A3B8",
+            "surface-container-lowest": "#111820",
+            "surface-container-low": "#111820",
+            "surface-container": "#17212B",
+            "surface-container-high": "#1C2936",
+            "surface-container-highest": "#223142",
+            "surface-bright": "#283A4E",
+            
+            "primary": "#4285F4",
+            "primary-container": "#1A365D",
+            "on-primary": "#FFFFFF",
+            "on-primary-container": "#D2E3FC",
+            
+            "secondary": "#34A853",
+            "secondary-container": "#0D381E",
+            "on-secondary": "#FFFFFF",
+
+            "warning": "#FBBC05",
+            "warning-container": "#3D2E00",
+            "on-warning": "#000000",
+            
+            "tertiary": "#EA4335",
+            "tertiary-container": "#3C1715",
+            "on-tertiary": "#FFFFFF",
+
+            "error": "#EA4335",
+            "error-container": "#3C1715",
+            "outline": "#94A3B8",
+            "outline-variant": "#1F2B3A",
+
+            "accent": "#00B8D9",
+            "ai-accent": "#00B8D9"
+          },
+          fontFamily: {
+            sans: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased selection:bg-primary selection:text-on-primary min-h-screen relative overflow-x-hidden">
+
+  <!-- Faint 1px Noise Overlay -->
+  <div class="grain-overlay"></div>
+
+  <!-- Custom Cursor Glow -->
+  <div id="cursor-glow" class="fixed top-0 left-0 w-[480px] h-[480px] rounded-full pointer-events-none z-40 transition-opacity duration-300 opacity-0" style="background: radial-gradient(circle, rgba(0, 184, 217, 0.35) 0%, rgba(0, 184, 217, 0) 70%); mix-blend-mode: screen; filter: blur(45px); transform: translate(-50%, -50%);"></div>
+
+  <!-- ================= STICKY GLOBAL HEADER ================= -->
+  <header class="sticky top-0 z-50 w-full backdrop-blur-xl bg-[#0B0F14]/85 border-b border-[#4285F4]/15 transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="w-8 h-8 rounded-lg bg-[#17212B] border border-[#00B8D9]/30 flex items-center justify-center text-[#00B8D9] group-hover:border-[#00B8D9] transition-all shadow-[0_0_10px_rgba(0,184,217,0.15)] shield-logo-box">
+          <span class="material-symbols-outlined text-[18px]">shield</span>
+          <div class="shield-scan-line"></div>
+        </div>
+        <div class="flex items-center gap-0.5">
+          <span id="brand-wordmark" class="font-bold text-[19px] tracking-tight text-[#F8FAFC] font-sans">InvoiceGuard</span>
+          <span id="brand-cursor" class="font-mono font-bold text-[18px] text-[#4285F4] select-none">_</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Bar -->
+      <nav id="user-nav-bar" class="hidden md:flex items-center gap-1.5 bg-[#111820]/90 p-1 rounded-full border border-white/5 shadow-inner">
+        <a href="/" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/5 rounded-full transition-all font-sans" data-section="overview">Home</a>
+        <a href="/vendors" class="nav-link px-4 py-1.5 text-xs font-bold text-white bg-[#4285F4] rounded-full shadow-[0_0_12px_rgba(66,133,244,0.4)] active transition-all font-sans" data-section="vendors">Vendors</a>
+        <a href="/feedback" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/5 rounded-full transition-all font-sans" data-section="feedback">Feedback</a>
+      </nav>
+
+      <!-- Desktop Navigation for Admin Mode -->
+      <nav id="admin-nav-bar" class="hidden items-center gap-1 bg-[#111820]/90 p-1 rounded-full border border-error/30 shadow-inner">
+        <span class="px-3.5 py-1 rounded-full text-xs font-mono font-bold text-error bg-error/10">🛡 ADMIN SENTINEL</span>
+        <button onclick="exitAdminMode()" class="px-3 py-1 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full font-medium transition-colors font-sans">
+          Exit Admin Mode
+        </button>
+      </nav>
+
+      <!-- Header Action Group -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        <button onclick="openAdminLoginModal()" id="header-admin-login-btn" title="Admin Portal Login (admin:admins)" class="px-3.5 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-outline hover:text-on-surface border border-white/5 text-xs font-mono font-medium transition-colors">
+          Admin
+        </button>
+
+        <div onclick="openDemoUserModal()" class="flex items-center gap-3 px-3.5 py-1.5 bg-surface-container-low hover:bg-surface-container rounded-xl border border-white/10 cursor-pointer transition-all shadow-sm hover:border-white/20">
+          <div id="header-avatar-container" class="w-7 h-7 rounded-full bg-[#4285F4]/15 border border-[#4285F4]/30 flex items-center justify-center shrink-0 text-[#4285F4] shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">person</span>
+          </div>
+          <div class="flex flex-col text-left min-w-[100px] sm:min-w-[120px]">
+            <span class="text-xs font-bold text-on-surface leading-tight font-sans" id="user-display-name">Alex Vance</span>
+            <span class="text-[11px] text-on-surface-variant font-mono leading-tight truncate max-w-[130px]" id="user-display-role">Finance Sec Lead</span>
+          </div>
+          <span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+        </div>
+
+        <button onclick="clearUserInvoices()" title="Clear all uploaded invoices for current profile" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-error/10 hover:bg-error/20 text-error border border-error/20 text-xs font-semibold transition-all font-sans">
+          <span class="material-symbols-outlined text-[16px]">delete_sweep</span>
+          <span class="hidden sm:inline">Clear Invoices</span>
+        </button>
+      </div>
+
+    </div>
+    <div id="scroll-progress-bar" class="h-[2px] bg-gradient-to-r from-[#4285F4] via-[#00B8D9] to-[#4285F4] w-0 transition-all duration-75 shadow-[0_0_8px_rgba(66,133,244,0.6)]"></div>
+  </header>
+
+  <!-- ================= MAIN VENDORS PAGE ================= -->
+  <main id="user-main-view" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-10 relative">
+
+    <!-- Page Header Banner -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5">
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center">
+            <span class="material-symbols-outlined text-[20px]">domain</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-on-surface">Vendor Intelligence Registry</h1>
+        </div>
+        <p class="text-xs sm:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
+          Central database of authorized enterprise vendors, payment destinations on file, verified GSTIN credentials, and risk trust index ratings.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3 self-start md:self-auto">
+        <button onclick="openRegisterKycModal()" class="px-4 py-2.5 rounded-xl bg-primary text-on-primary hover:bg-white transition-all font-bold text-xs flex items-center gap-2 shadow-lg btn-primary-glow">
+          <span class="material-symbols-outlined text-[18px]">add_business</span>
+          <span>Register New Vendor KYC</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="p-5 rounded-2xl bg-surface-container-low border border-white/5 flex flex-col gap-1">
+        <span class="text-xs font-mono text-outline uppercase tracking-wider">Registered Vendors</span>
+        <span class="text-2xl font-mono font-bold text-on-surface" id="stat-total-vendors">5 Active</span>
+      </div>
+      <div class="p-5 rounded-2xl bg-surface-container-low border border-white/5 flex flex-col gap-1">
+        <span class="text-xs font-mono text-outline uppercase tracking-wider">KYC Verified</span>
+        <span class="text-2xl font-mono font-bold text-secondary" id="stat-verified-vendors">4 Verified</span>
+      </div>
+      <div class="p-5 rounded-2xl bg-surface-container-low border border-white/5 flex flex-col gap-1">
+        <span class="text-xs font-mono text-outline uppercase tracking-wider">Open Dispute Flags</span>
+        <span class="text-2xl font-mono font-bold text-tertiary" id="stat-disputed-vendors">1 Flagged</span>
+      </div>
+      <div class="p-5 rounded-2xl bg-surface-container-low border border-white/5 flex flex-col gap-1">
+        <span class="text-xs font-mono text-outline uppercase tracking-wider">Total Disbursed Volume</span>
+        <span class="text-2xl font-mono font-bold text-primary" id="stat-total-disbursed">₹3.05 Cr</span>
+      </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container-low border border-white/5">
+      <div class="flex items-center gap-1.5 bg-surface-container p-1 rounded-xl border border-white/5 text-xs font-medium">
+        <button onclick="filterVendorsPage('all')" id="vfilter-all" class="vfilter-btn px-3 py-1.5 rounded-lg bg-surface-container-high text-on-surface font-semibold">All Vendors</button>
+        <button onclick="filterVendorsPage('verified')" id="vfilter-verified" class="vfilter-btn px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface">Verified Only</button>
+        <button onclick="filterVendorsPage('flagged')" id="vfilter-flagged" class="vfilter-btn px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface">Unverified / Flagged</button>
+      </div>
+
+      <div class="flex items-center gap-2 bg-surface-container px-3.5 py-2 rounded-xl border border-white/5 text-xs min-w-[240px]">
+        <span class="material-symbols-outlined text-[18px] text-outline">search</span>
+        <input id="vendor-search-input" type="text" placeholder="Search vendor name, GSTIN, category..." class="bg-transparent border-none outline-none text-on-surface placeholder:text-outline w-full text-xs" oninput="searchVendorsPage(this.value)">
+      </div>
+    </div>
+
+    <!-- Vendors Grid -->
+    <section id="vendors" class="flex flex-col gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="vendors-cards-grid">
+        <!-- Dynamically populated via app.js -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Register Vendor KYC Modal -->
+  <div id="vendor-kyc-modal" class="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface-container-low border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-white/5">
+        <h3 class="text-lg font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">add_business</span>
+          Register Vendor KYC
+        </h3>
+        <button onclick="closeRegisterKycModal()" class="text-outline hover:text-on-surface">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-3 text-xs font-sans">
+        <div>
+          <label class="block text-outline mb-1 font-mono">Vendor Legal Name *</label>
+          <input id="kyc-vendor-name" type="text" placeholder="e.g. Acme Logistics Pvt Ltd" class="w-full bg-surface-container text-on-surface p-2.5 rounded-xl border border-white/5 focus:outline-none focus:border-primary">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-outline mb-1 font-mono">GSTIN Identification *</label>
+            <input id="kyc-gstin" type="text" placeholder="27AAAAA0000A1Z5" class="w-full bg-surface-container text-on-surface p-2.5 rounded-xl border border-white/5 font-mono focus:outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-outline mb-1 font-mono">Category / Industry</label>
+            <input id="kyc-category" type="text" placeholder="Logistics & Transport" class="w-full bg-surface-container text-on-surface p-2.5 rounded-xl border border-white/5 focus:outline-none focus:border-primary">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-outline mb-1 font-mono">Primary Bank Name</label>
+            <input id="kyc-bank-name" type="text" placeholder="HDFC Bank" class="w-full bg-surface-container text-on-surface p-2.5 rounded-xl border border-white/5 focus:outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="block text-outline mb-1 font-mono">Account Number</label>
+            <input id="kyc-bank-acc" type="text" placeholder="502000998811" class="w-full bg-surface-container text-on-surface p-2.5 rounded-xl border border-white/5 font-mono focus:outline-none focus:border-primary">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
+        <button onclick="closeRegisterKycModal()" class="px-4 py-2 rounded-xl bg-surface-container text-outline hover:text-on-surface text-xs font-semibold">Cancel</button>
+        <button onclick="submitVendorKycForm()" class="px-4 py-2 rounded-xl bg-primary text-on-primary hover:bg-white font-bold text-xs shadow-md">Submit Registration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Persona Switcher Modal -->
+  <div id="demo-user-modal" class="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface-container-low border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-white/5">
+        <h3 class="text-base font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#4285F4]">switch_account</span>
+          Select Operating Persona
+        </h3>
+        <button onclick="closeDemoUserModal()" class="text-outline hover:text-on-surface">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <div id="demo-users-modal-list" class="flex flex-col gap-2 max-h-[360px] overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- Shared Admin Login Modal -->
+  <div id="admin-login-modal" class="fixed inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface-container-low border border-error/30 rounded-2xl p-6 w-full max-w-md shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-white/5">
+        <h3 class="text-base font-bold text-on-surface flex items-center gap-2 text-error">
+          <span class="material-symbols-outlined">shield_person</span>
+          Admin Sentinel Authentication
+        </h3>
+        <button onclick="closeAdminLoginModal()" class="text-outline hover:text-on-surface">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <form onsubmit="handleAdminLogin(event)" class="flex flex-col gap-3 text-xs font-sans">
+        <div>
+          <label class="block text-outline mb-1 font-mono">Username</label>
+          <input id="admin-username-input" type="text" value="admin" class="w-full bg-surface-container text-on-surface p-2.5 rounded-xl border border-white/5 font-mono focus:outline-none focus:border-error">
+        </div>
+        <div>
+          <label class="block text-outline mb-1 font-mono">Password</label>
+          <input id="admin-password-input" type="password" value="admins" class="w-full bg-surface-container text-on-surface p-2.5 rounded-xl border border-white/5 font-mono focus:outline-none focus:border-error">
+        </div>
+        <button type="submit" class="mt-2 w-full py-2.5 rounded-xl bg-error text-on-error font-bold text-xs shadow-lg hover:bg-red-600 transition-colors">
+          Authenticate CISO Admin Session
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Shared Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-surface-container-high text-on-surface border border-white/10 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 opacity-0 translate-y-4 transition-all duration-300 pointer-events-none">
+    <span class="material-symbols-outlined text-primary text-[20px]">info</span>
+    <span id="toast-msg" class="text-xs font-medium">Notification</span>
+  </div>
+
+  <script src="/static/app.js"></script>
+  <script>
+    function openRegisterKycModal() {
+      document.getElementById('vendor-kyc-modal')?.classList.remove('hidden');
+    }
+    function closeRegisterKycModal() {
+      document.getElementById('vendor-kyc-modal')?.classList.add('hidden');
+    }
+    function submitVendorKycForm() {
+      const name = document.getElementById('kyc-vendor-name')?.value;
+      const gstin = document.getElementById('kyc-gstin')?.value;
+      if (!name || !gstin) {
+        showToast('Please provide vendor legal name and GSTIN.');
+        return;
+      }
+      closeRegisterKycModal();
+      showToast(`KYC submission received for ${name} (${gstin}). Sent for verification.`);
+    }
+
+    let vendorFilterState = 'all';
+    let vendorSearchQuery = '';
+
+    function filterVendorsPage(filterType) {
+      vendorFilterState = filterType;
+      document.querySelectorAll('.vfilter-btn').forEach(btn => {
+        btn.className = 'vfilter-btn px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface';
+      });
+      const activeBtn = document.getElementById(`vfilter-${filterType}`);
+      if (activeBtn) activeBtn.className = 'vfilter-btn px-3 py-1.5 rounded-lg bg-surface-container-high text-on-surface font-semibold';
+      renderVendorsCustomGrid();
+    }
+
+    function searchVendorsPage(query) {
+      vendorSearchQuery = query.toLowerCase();
+      renderVendorsCustomGrid();
+    }
+
+    function renderVendorsCustomGrid() {
+      const container = document.getElementById('vendors-cards-grid');
+      if (!container) return;
+
+      let vendors = STATE.vendors || [];
+      if (vendorFilterState === 'verified') {
+        vendors = vendors.filter(v => v.verified);
+      } else if (vendorFilterState === 'flagged') {
+        vendors = vendors.filter(v => !v.verified || (v.complaints && v.complaints.length > 0));
+      }
+
+      if (vendorSearchQuery) {
+        vendors = vendors.filter(v => 
+          (v.name && v.name.toLowerCase().includes(vendorSearchQuery)) ||
+          (v.gstin && v.gstin.toLowerCase().includes(vendorSearchQuery)) ||
+          (v.category && v.category.toLowerCase().includes(vendorSearchQuery))
+        );
+      }
+
+      // Update stat counters
+      const totalEl = document.getElementById('stat-total-vendors');
+      if (totalEl) totalEl.innerText = `${STATE.vendors.length} Active`;
+      const verEl = document.getElementById('stat-verified-vendors');
+      if (verEl) verEl.innerText = `${STATE.vendors.filter(v => v.verified).length} Verified`;
+      const disEl = document.getElementById('stat-disputed-vendors');
+      if (disEl) disEl.innerText = `${STATE.vendors.filter(v => !v.verified || (v.complaints && v.complaints.length > 0)).length} Flagged`;
+
+      if (vendors.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center text-on-surface-variant bg-surface-container-low rounded-2xl border border-white/5">
+            <span class="material-symbols-outlined text-[36px] text-outline mb-2">search_off</span>
+            <p class="font-medium text-sm text-on-surface">No matching vendors found</p>
+            <span class="text-xs text-outline">Try adjusting your search query or filter tab.</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = vendors.map(v => {
+        const isVerified = v.verified;
+        const vBadge = isVerified 
+          ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary/10 text-secondary border border-secondary/20 text-[10px] font-mono font-bold"><span class="material-symbols-outlined text-[13px]">verified</span> VERIFIED</span>`
+          : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-error/10 text-error border border-error/20 text-[10px] font-mono font-bold"><span class="material-symbols-outlined text-[13px]">warning</span> UNVERIFIED</span>`;
+
+        const disbLakh = ((v.total_disbursed || 0) / 100000).toFixed(1);
+
+        return `
+          <div class="rounded-2xl bg-surface-container-low border border-white/5 p-5 flex flex-col justify-between hover:border-white/15 transition-all shadow-sm group">
+            <div class="flex flex-col gap-3">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex flex-col">
+                  <h3 class="font-bold text-base text-on-surface group-hover:text-primary transition-colors">${v.name}</h3>
+                  <span class="text-xs text-on-surface-variant font-mono mt-0.5">${v.category || 'General Supplier'}</span>
+                </div>
+                ${vBadge}
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 text-xs font-mono pt-2 border-t border-white/5">
+                <div class="p-2 rounded bg-surface-container border border-white/5">
+                  <span class="text-[9px] uppercase text-outline block mb-0.5">GSTIN ID</span>
+                  <span class="text-on-surface font-semibold truncate block">${v.gstin || 'N/A'}</span>
+                </div>
+                <div class="p-2 rounded bg-surface-container border border-white/5">
+                  <span class="text-[9px] uppercase text-outline block mb-0.5">Trust Score</span>
+                  <span class="font-bold ${v.trust_score >= 80 ? 'text-secondary' : 'text-tertiary'}">${v.trust_score || 50}/100</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-xs font-mono text-on-surface-variant pt-1">
+                <span>Settled: <strong class="text-on-surface">${v.paid_invoice_count || 0} Invoices</strong></span>
+                <span>Volume: <strong class="text-primary">₹${disbLakh}L</strong></span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-4 mt-2 border-t border-white/5">
+              <button onclick="showToast('Viewing full KYC ledger for ${v.name}')" class="w-full py-2 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-semibold text-on-surface transition-colors flex items-center justify-center gap-1">
+                <span>View KYC Profile</span>
+                <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+              </button>
+              <button onclick="openFlagModalForActive()" title="Report Vendor" class="p-2 rounded-xl bg-error/10 hover:bg-error/20 text-error border border-error/20 transition-colors">
+                <span class="material-symbols-outlined text-[16px]">flag</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Auto-hook custom vendor grid renderer once app loads
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(renderVendorsCustomGrid, 250);
+    });
+  </script>
+</body>
+</html>

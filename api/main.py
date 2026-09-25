@@ -683,6 +683,30 @@ def serve_index():
         return f.read()
 
 
+@app.get("/vendors", response_class=HTMLResponse)
+@app.get("/vendors.html", response_class=HTMLResponse)
+def serve_vendors_page():
+    vendors_file = os.path.join(STATIC_PATH, "vendors.html")
+    if os.path.exists(vendors_file):
+        with open(vendors_file, "r", encoding="utf-8") as f:
+            return f.read()
+    index_file = os.path.join(STATIC_PATH, "index.html")
+    with open(index_file, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@app.get("/feedback", response_class=HTMLResponse)
+@app.get("/feedback.html", response_class=HTMLResponse)
+def serve_feedback_page():
+    feedback_file = os.path.join(STATIC_PATH, "feedback.html")
+    if os.path.exists(feedback_file):
+        with open(feedback_file, "r", encoding="utf-8") as f:
+            return f.read()
+    index_file = os.path.join(STATIC_PATH, "index.html")
+    with open(index_file, "r", encoding="utf-8") as f:
+        return f.read()
+
+
 @app.get("/admin", response_class=HTMLResponse)
 def serve_admin_page():
     index_file = os.path.join(STATIC_PATH, "index.html")

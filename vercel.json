@@ -15,8 +15,12 @@
       "dest": "/static/$1"
     },
     {
-      "src": "/(index.html|app.js|sample_invoices/.*)",
+      "src": "/(index.html|vendors.html|feedback.html|app.js|sample_invoices/.*)",
       "dest": "/static/$1"
+    },
+    {
+      "src": "/(vendors|feedback)",
+      "dest": "api/main.py"
     },
     {
       "src": "/api/(.*)",

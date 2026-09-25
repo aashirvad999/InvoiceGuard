@@ -69,26 +69,11 @@
       100% { top: 130%; }
     }
 
-    /* Header Nav Link Underline Grow from Center */
+    /* Header Nav Link Pill Styling */
     .nav-link {
       position: relative;
-      transition: color 0.2s ease;
-    }
-    .nav-link::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0%;
-      height: 2px;
-      background-color: #4285F4;
-      box-shadow: 0 0 8px rgba(66, 133, 244, 0.8);
-      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      border-radius: 1px;
-    }
-    .nav-link:hover::after, .nav-link.active::after {
-      width: 70%;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 9999px;
     }
 
     /* Forensic Card Edge Sheen */
@@ -328,7 +313,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
       
       <!-- Brand Logo -->
-      <a href="#overview" class="flex items-center gap-3 group">
+      <a href="/" class="flex items-center gap-3 group">
         <div class="w-8 h-8 rounded-lg bg-[#17212B] border border-[#00B8D9]/30 flex items-center justify-center text-[#00B8D9] group-hover:border-[#00B8D9] transition-all shadow-[0_0_10px_rgba(0,184,217,0.15)] shield-logo-box">
           <span class="material-symbols-outlined text-[18px]">shield</span>
           <div class="shield-scan-line"></div>
@@ -340,12 +325,10 @@
       </a>
 
       <!-- Desktop Smooth Section Navigation (User Mode) -->
-      <nav id="user-nav-bar" class="hidden md:flex items-center gap-1.5 bg-[#111820]/90 p-1.5 rounded-full border border-white/5 shadow-inner">
-        <a href="#overview" class="nav-link px-4 py-1.5 text-xs font-medium text-[#F8FAFC] transition-all" data-section="overview">Overview</a>
-        <a href="#analysis-spotlight" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-all" data-section="analysis-spotlight">Analysis</a>
-        <a href="#invoices" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-all" data-section="invoices">Invoices</a>
-        <a href="#vendors" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-all" data-section="vendors">Vendors</a>
-        <a href="#feedback" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] transition-all" data-section="feedback">Feedback</a>
+      <nav id="user-nav-bar" class="hidden md:flex items-center gap-1.5 bg-[#111820]/90 p-1 rounded-full border border-white/5 shadow-inner">
+        <a href="/" class="nav-link px-4 py-1.5 text-xs font-bold text-white bg-[#4285F4] rounded-full shadow-[0_0_12px_rgba(66,133,244,0.4)] active transition-all font-sans" data-section="overview">Home</a>
+        <a href="/vendors" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/5 rounded-full transition-all font-sans" data-section="vendors">Vendors</a>
+        <a href="/feedback" class="nav-link px-4 py-1.5 text-xs font-medium text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-white/5 rounded-full transition-all font-sans" data-section="feedback">Feedback</a>
       </nav>
 
       <!-- Desktop Navigation for Admin Mode (Hidden by default) -->
@@ -910,42 +893,6 @@
         </div>
       </div>
 
-    </section>
-
-    <!-- ================= SECTION 4: VENDORS REGISTRY ================= -->
-    <section id="vendors" class="scroll-mt-20 flex flex-col gap-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-on-surface">Vendors</h2>
-          <p class="text-xs text-on-surface-variant">Trusted vendor registry, payment accounts on file, and trust index ratings.</p>
-        </div>
-        <button onclick="showToast('Vendor KYC Registration workflow active.')" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-medium text-on-surface flex items-center gap-1.5 self-start">
-          <span class="material-symbols-outlined text-[15px]">add</span>
-          <span>Register Vendor KYC</span>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="vendors-cards-grid">
-        <!-- Populated via app.js -->
-      </div>
-    </section>
-
-    <!-- ================= SECTION 5: VENDOR FEEDBACK & COMPLAINTS ================= -->
-    <section id="feedback" class="scroll-mt-20 flex flex-col gap-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-on-surface">Vendor Feedback &amp; Compliance</h2>
-          <p class="text-xs text-on-surface-variant">Recorded payment routing discrepancies, suspicious wire changes, and compliance flags.</p>
-        </div>
-        <button onclick="openFlagModalForActive()" class="px-3.5 py-1.5 rounded-lg bg-error/10 hover:bg-error/20 border border-error/30 text-error text-xs font-semibold flex items-center gap-1.5 self-start">
-          <span class="material-symbols-outlined text-[15px]">add_alert</span>
-          <span>Report a Vendor</span>
-        </button>
-      </div>
-
-      <div class="flex flex-col gap-3" id="feedback-complaints-list">
-        <!-- Populated via app.js -->
-      </div>
     </section>
 
   </main>
