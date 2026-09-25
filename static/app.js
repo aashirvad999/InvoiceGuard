@@ -741,7 +741,7 @@ function renderSpotlightInvoice(invoiceId) {
 
   // Evidence Matrix Cards
   const evCount = document.getElementById('spotlight-signals-count');
-  if (evCount) evCount.innerText = `${signals.length + passed.length} forensic checkpoints`;
+  if (evCount) evCount.innerText = `${signals.length} forensic checkpoints`;
 
   const evContainer = document.getElementById('spotlight-evidence-container');
   if (evContainer) {
@@ -798,25 +798,6 @@ function renderSpotlightInvoice(invoiceId) {
       </div>
       `;
     }).join('');
-
-
-    if (passed.length > 0) {
-      html += `
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-          ${passed.map(p => `
-            <div class="flex items-center gap-2.5 p-2.5 rounded-lg bg-surface-container border border-white/5 text-xs">
-              <span class="w-5 h-5 rounded-full bg-secondary/15 text-secondary flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-[13px]">check</span>
-              </span>
-              <div class="flex flex-col min-w-0">
-                <span class="text-on-surface font-medium truncate">${p.title}</span>
-                <span class="text-outline font-mono text-[10px] truncate">${p.detail}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
 
     evContainer.innerHTML = html;
   }

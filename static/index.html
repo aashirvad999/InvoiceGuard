@@ -399,12 +399,6 @@
       <!-- Interactive Canvas Dot Grid Background -->
       <canvas id="hero-dot-canvas" class="absolute inset-0 w-full h-full pointer-events-none -z-10"></canvas>
 
-      <!-- Status Pill -->
-      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#17212B]/90 border border-[#00B8D9]/30 text-xs font-mono font-medium text-[#00B8D9] mb-6 shadow-[0_0_15px_rgba(0,184,217,0.12)] hero-lens-badge">
-        <span class="w-2 h-2 rounded-full bg-[#00B8D9] animate-pulse"></span>
-        <span class="tracking-wider uppercase text-[11px]">INVOICE FORENSIC SECURITY</span>
-      </div>
-
       <!-- Large Headline -->
       <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#F8FAFC] max-w-3xl leading-[1.1] font-sans hero-lens-headline">
         Verify before you <span class="hero-highlight-word">pay<span class="hero-highlight-bar"></span></span>.
@@ -451,17 +445,6 @@
             <span>Upload Invoice</span>
           </button>
 
-          <!-- Format Pills -->
-          <div class="flex items-center gap-2 mt-1 text-[11px] font-mono text-outline">
-            <span class="px-2 py-0.5 rounded bg-surface-container-high/80 border border-white/5">PDF</span>
-            <span>·</span>
-            <span class="px-2 py-0.5 rounded bg-surface-container-high/80 border border-white/5">PNG</span>
-            <span>·</span>
-            <span class="px-2 py-0.5 rounded bg-surface-container-high/80 border border-white/5">JPG</span>
-            <span>·</span>
-            <span>Max 25MB</span>
-          </div>
-
           <!-- Live Multi-Stage Processing Overlay (Hidden by Default) -->
           <div id="upload-progress-overlay" class="absolute inset-0 bg-surface-container-low/95 rounded-2xl backdrop-blur-md flex flex-col items-center justify-center p-6 gap-4 hidden z-20">
             <div class="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -490,23 +473,6 @@
             </div>
           </div>
         </div>
-
-        <!-- 1-Click Test Invoices Quick-Bar -->
-        <div class="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
-          <span class="text-outline font-mono text-[11px] uppercase mr-1">Load Demo Scenarios:</span>
-          <button onclick="loadDemoInvoice('INV-2026-0918')" class="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-tertiary/30 text-tertiary font-mono text-[11px] flex items-center gap-1.5 transition-all">
-            <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-            <span>Tampered Font &amp; Volume Spike (ABC Tech)</span>
-          </button>
-          <button onclick="loadDemoInvoice('INV-8831')" class="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-secondary/30 text-secondary font-mono text-[11px] flex items-center gap-1.5 transition-all">
-            <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-            <span>Safe Baseline (Cloudflare)</span>
-          </button>
-          <button onclick="loadDemoInvoice('INV-7729')" class="px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-error/30 text-error font-mono text-[11px] flex items-center gap-1.5 transition-all">
-            <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
-            <span>IBAN Route Mismatch (Zenith Supplies)</span>
-          </button>
-        </div>
       </div>
     </section>
 
@@ -522,7 +488,6 @@
           </div>
           <div>
             <h2 class="text-xl font-bold tracking-tight text-on-surface">Invoice Analysis Spotlight</h2>
-            <p class="text-xs text-on-surface-variant">Live deterministic &amp; OCR forensics breakdown for the selected record.</p>
           </div>
         </div>
         
