@@ -13,36 +13,31 @@ DEMO_USERS = [
         "email": "demo1@invoiceguard.demo",
         "name": "Alex Vance",
         "initials": "AV",
-        "role": "Finance Sec",
-        "avatar_url": "https://lh3.googleusercontent.com/aida/AEtjO1WrkfpzKKRxpDEqWEKJZT85NKinPIEcpUKVrt4vxf-YAaRh1oPrIj8nuVoAhiawYnB4J3ynGcWujvFk2vSudd0Wi_WkC61Pm3HIq1DdJzIWt8Du-tlbFbZFfXzDM-gZxfycpBtAyHlaOMCuv2uVqsbrY3gKXQ6vr_a5QldJIAHhXtxbYR1B2GRGeiHumVJAs-UHYMgjfg6XcnFuE9W9XX5Fz5apO-4LR-vq__pAFEex3BB83ssxRClAyh0"
+        "role": "Finance Sec"
     },
     {
         "email": "demo2@invoiceguard.demo",
         "name": "Priya Sharma",
         "initials": "PS",
-        "role": "Senior Controller",
-        "avatar_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80"
+        "role": "Senior Controller"
     },
     {
         "email": "demo3@invoiceguard.demo",
         "name": "Marcus Thorne",
         "initials": "MT",
-        "role": "Fraud Risk Officer",
-        "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+        "role": "Fraud Risk Officer"
     },
     {
         "email": "demo4@invoiceguard.demo",
         "name": "Elena Rostova",
         "initials": "ER",
-        "role": "Head of Treasury",
-        "avatar_url": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80"
+        "role": "Head of Treasury"
     },
     {
         "email": "demo5@invoiceguard.demo",
         "name": "Arjun Mehta",
         "initials": "AM",
-        "role": "Compliance Auditor",
-        "avatar_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
+        "role": "Compliance Auditor"
     }
 ]
 

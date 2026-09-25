@@ -21,8 +21,7 @@ USER_PROFILES = {
         "name": "Alex Vance",
         "role": "user",
         "title": "Finance Sec Lead",
-        "initials": "AV",
-        "avatar_url": "https://lh3.googleusercontent.com/aida/AEtjO1WrkfpzKKRxpDEqWEKJZT85NKinPIEcpUKVrt4vxf-YAaRh1oPrIj8nuVoAhiawYnB4J3ynGcWujvFk2vSudd0Wi_WkC61Pm3HIq1DdJzIWt8Du-tlbFbZFfXzDM-gZxfycpBtAyHlaOMCuv2uVqsbrY3gKXQ6vr_a5QldJIAHhXtxbYR1B2GRGeiHumVJAs-UHYMgjfg6XcnFuE9W9XX5Fz5apO-4LR-vq__pAFEex3BB83ssxRClAyh0"
+        "initials": "AV"
     },
     "usr_demo2_priya": {
         "uid": "usr_demo2_priya",
@@ -30,8 +29,7 @@ USER_PROFILES = {
         "name": "Priya Sharma",
         "role": "user",
         "title": "Senior Controller",
-        "initials": "PS",
-        "avatar_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80"
+        "initials": "PS"
     },
     "usr_demo3_marcus": {
         "uid": "usr_demo3_marcus",
@@ -39,8 +37,7 @@ USER_PROFILES = {
         "name": "Marcus Thorne",
         "role": "user",
         "title": "Fraud Risk Officer",
-        "initials": "MT",
-        "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+        "initials": "MT"
     },
     "usr_demo4_elena": {
         "uid": "usr_demo4_elena",
@@ -48,8 +45,7 @@ USER_PROFILES = {
         "name": "Elena Rostova",
         "role": "user",
         "title": "Head of Treasury",
-        "initials": "ER",
-        "avatar_url": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80"
+        "initials": "ER"
     },
     "usr_demo5_arjun": {
         "uid": "usr_demo5_arjun",
@@ -57,8 +53,7 @@ USER_PROFILES = {
         "name": "Arjun Mehta",
         "role": "user",
         "title": "Compliance Auditor (Fresh Profile)",
-        "initials": "AM",
-        "avatar_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
+        "initials": "AM"
     },
     "admin_root_001": {
         "uid": "admin_root_001",
@@ -66,8 +61,7 @@ USER_PROFILES = {
         "name": "Master Compliance Admin",
         "role": "admin",
         "title": "Chief Information Security Officer",
-        "initials": "AD",
-        "avatar_url": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80"
+        "initials": "AD"
     }
 }
 

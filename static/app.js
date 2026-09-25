@@ -18,8 +18,7 @@ const STATE = {
     name: 'Alex Vance',
     role: 'user',
     title: 'Finance Sec Lead',
-    initials: 'AV',
-    avatar_url: 'https://lh3.googleusercontent.com/aida/AEtjO1WrkfpzKKRxpDEqWEKJZT85NKinPIEcpUKVrt4vxf-YAaRh1oPrIj8nuVoAhiawYnB4J3ynGcWujvFk2vSudd0Wi_WkC61Pm3HIq1DdJzIWt8Du-tlbFbZFfXzDM-gZxfycpBtAyHlaOMCuv2uVqsbrY3gKXQ6vr_a5QldJIAHhXtxbYR1B2GRGeiHumVJAs-UHYMgjfg6XcnFuE9W9XX5Fz5apO-4LR-vq__pAFEex3BB83ssxRClAyh0'
+    initials: 'AV'
   },
   demoUsers: [],
   invoicesFilter: 'all',
@@ -1693,10 +1692,18 @@ function renderDemoUsersList() {
       ? `<span class="material-symbols-outlined text-[20px] text-[#4285F4] shrink-0" title="Active Persona">check_circle</span>`
       : `<span class="material-symbols-outlined text-[20px] text-[#94A3B8]/35 group-hover:text-[#4285F4] shrink-0 transition-colors" title="Select Persona">radio_button_unchecked</span>`;
 
+    const avatarGraphic = isActive
+      ? `<div class="w-8 h-8 rounded-full bg-[#4285F4]/20 border border-[#4285F4]/50 flex items-center justify-center text-[#4285F4] shrink-0 shadow-sm">
+           <span class="material-symbols-outlined text-[20px]">person</span>
+         </div>`
+      : `<div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center text-on-surface-variant group-hover:text-on-surface group-hover:border-white/20 shrink-0 transition-all">
+           <span class="material-symbols-outlined text-[20px]">person</span>
+         </div>`;
+
     return `
       <div class="group p-3 rounded-xl ${isActive ? 'bg-surface-container border border-[#4285F4]/40 shadow-[0_0_12px_rgba(66,133,244,0.15)]' : 'bg-surface-container-low hover:bg-surface-container border border-white/5'} flex items-center justify-between cursor-pointer transition-all" onclick="switchDemoUser('${u.uid}')">
         <div class="flex items-center gap-3">
-          <img src="${u.avatar_url}" class="w-8 h-8 rounded-full object-cover border border-white/10">
+          ${avatarGraphic}
           <div class="flex flex-col">
             <span class="text-xs font-bold text-on-surface font-sans flex items-center gap-1.5">
               ${u.name}
@@ -1743,8 +1750,6 @@ function updateUserDisplay() {
   if (nameEl) nameEl.innerText = u.name;
   const roleEl = document.getElementById('user-display-role');
   if (roleEl) roleEl.innerText = u.title || (u.role === 'admin' ? 'Administrator' : 'Finance User');
-  const hAvatar = document.getElementById('header-avatar');
-  if (hAvatar && u.avatar_url) hAvatar.src = u.avatar_url;
   renderDemoUsersList();
 }
 

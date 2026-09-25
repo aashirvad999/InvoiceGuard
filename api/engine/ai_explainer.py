@@ -87,21 +87,26 @@ CHAT_SYSTEM_INSTRUCTION = (
 def get_gemini_client() -> Optional[Any]:
     """Returns Gemini client if a valid GEMINI_API_KEY is configured in environment."""
     load_local_env()
+    key_val = os.getenv("GEMINI_API_KEY")
+    key_configured = bool(key_val and key_val.strip() and key_val.strip() != "YOUR_ACTUAL_GEMINI_API_KEY")
+
     if not GENAI_AVAILABLE:
+        print(f"[VERCEL-DIAGNOSTIC] Client Init Failed | Reason: google-genai SDK not available | Model: '{GEMINI_MODEL}' | GEMINI_API_KEY configured: {key_configured}")
         logger.warning("[DIAGNOSTIC] google-genai SDK present: NO")
         return None
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key or not api_key.strip() or api_key.strip() == "YOUR_ACTUAL_GEMINI_API_KEY":
+
+    if not key_configured:
+        print(f"[VERCEL-DIAGNOSTIC] Client Init Failed | Reason: GEMINI_API_KEY missing or placeholder | Model: '{GEMINI_MODEL}' | GEMINI_API_KEY configured: False")
         logger.warning("[DIAGNOSTIC] GEMINI_API_KEY configured: False")
         return None
 
-    logger.info("[DIAGNOSTIC] GEMINI_API_KEY configured: True (Length: %d chars)", len(api_key.strip()))
+    logger.info("[DIAGNOSTIC] GEMINI_API_KEY configured: True (Length: %d chars)", len(key_val.strip()))
     try:
-        return genai.Client(api_key=api_key.strip())
-    except ValueError as e:
-        logger.error("[DIAGNOSTIC] Client initialization FAILED (ValueError): %s", str(e))
-        return None
+        c = genai.Client(api_key=key_val.strip())
+        print(f"[VERCEL-DIAGNOSTIC] Client Init Succeeded | Model: '{GEMINI_MODEL}' | GEMINI_API_KEY configured: True")
+        return c
     except Exception as e:
+        print(f"[VERCEL-DIAGNOSTIC] Client Init Exception Caught | Exception Type: '{type(e).__name__}' | Exception Message: '{str(e)}' | Model: '{GEMINI_MODEL}' | GEMINI_API_KEY configured: True")
         logger.error("[DIAGNOSTIC] Client initialization FAILED. Exception [%s]: %s", type(e).__name__, str(e))
         return None
 
@@ -358,6 +363,8 @@ def chat_with_invoiceguard(
             else:
                 logger.warning("[DIAGNOSTIC] Gemini chat request returned empty text.")
         except Exception as e:
+            key_configured = bool(os.getenv("GEMINI_API_KEY") and os.getenv("GEMINI_API_KEY").strip() and os.getenv("GEMINI_API_KEY").strip() != "YOUR_ACTUAL_GEMINI_API_KEY")
+            print(f"[VERCEL-DIAGNOSTIC] Chat API Exception Caught | Exception Type: '{type(e).__name__}' | Exception Message: '{str(e)}' | Model: '{GEMINI_MODEL}' | GEMINI_API_KEY configured: {key_configured}")
             logger.error("[DIAGNOSTIC] Gemini chat request FAILED. Exception [%s]: %s", type(e).__name__, str(e))
             if is_transient_error(e):
                 reply_text = "Gemini is temporarily busy due to high demand. Please try again in a moment."
@@ -373,6 +380,8 @@ def chat_with_invoiceguard(
             }
 
     # Deterministic Contextual Fallback Response if GEMINI_API_KEY is missing or API call fails
+    key_configured = bool(os.getenv("GEMINI_API_KEY") and os.getenv("GEMINI_API_KEY").strip() and os.getenv("GEMINI_API_KEY").strip() != "YOUR_ACTUAL_GEMINI_API_KEY")
+    print(f"[VERCEL-DIAGNOSTIC] Fallback Engine Triggered | Reason: Gemini Client is None | Model Engine: InvoiceGuard Fallback Engine | Target Gemini Model: '{GEMINI_MODEL}' | GEMINI_API_KEY configured: {key_configured}")
     logger.info("[DIAGNOSTIC] GEMINI_API_KEY missing or invalid. Returning contextual fallback response.")
     q_lower = query.lower()
     if not invoice_context:

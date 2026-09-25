@@ -291,7 +291,9 @@
 
         <!-- Persona Switcher Pill (Spacious User Profile) -->
         <div onclick="openDemoUserModal()" class="flex items-center gap-3 px-3.5 py-1.5 bg-surface-container-low hover:bg-surface-container rounded-xl border border-white/10 cursor-pointer transition-all shadow-sm hover:border-white/20">
-          <img id="header-avatar" src="https://lh3.googleusercontent.com/aida/AEtjO1WrkfpzKKRxpDEqWEKJZT85NKinPIEcpUKVrt4vxf-YAaRh1oPrIj8nuVoAhiawYnB4J3ynGcWujvFk2vSudd0Wi_WkC61Pm3HIq1DdJzIWt8Du-tlbFbZFfXzDM-gZxfycpBtAyHlaOMCuv2uVqsbrY3gKXQ6vr_a5QldJIAHhXtxbYR1B2GRGeiHumVJAs-UHYMgjfg6XcnFuE9W9XX5Fz5apO-4LR-vq__pAFEex3BB83ssxRClAyh0" class="w-7 h-7 rounded-full object-cover shadow-sm">
+          <div id="header-avatar-container" class="w-7 h-7 rounded-full bg-[#4285F4]/15 border border-[#4285F4]/30 flex items-center justify-center shrink-0 text-[#4285F4] shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">person</span>
+          </div>
           <div class="flex flex-col text-left min-w-[100px] sm:min-w-[120px]">
             <span class="text-xs font-bold text-on-surface leading-tight font-sans" id="user-display-name">Alex Vance</span>
             <span class="text-[11px] text-on-surface-variant font-mono leading-tight truncate max-w-[130px]" id="user-display-role">Finance Sec Lead</span>
